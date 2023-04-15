@@ -143,6 +143,8 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
                             offset = hour_offset * 100 + min_offset;
                         }
                         else{
+                            if(date_str.size() - next > 4)
+                                throw std::invalid_argument("value is not convertible!");
                             offset = parse_integer(
                             date_str, date_str.size() - next, next, diff);
                         }
