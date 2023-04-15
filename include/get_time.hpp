@@ -1,7 +1,6 @@
 #include <charconv>
 #include <chrono>
-#include <tuple>
-#include <utility>
+#include <type_traits>
 
 namespace mgutility {
 inline auto parse_integer(std::string_view str, uint32_t len, uint32_t& next,
