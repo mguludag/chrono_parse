@@ -64,7 +64,7 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
             tm.tm_min %= 60;
 
             tm.tm_hour + hour < 0      ? --tm.tm_mday,
-                tm.tm_hour = 23 + hour : tm.tm_hour += hour;
+                tm.tm_hour = 24 + hour : tm.tm_hour += hour;
         } else {
             tm.tm_min + minute > 59 ? tm.tm_hour + 1 > 23 ? ++tm.tm_mday,
                 ++tm.tm_hour %= 24 : ++tm.tm_hour : 0;
