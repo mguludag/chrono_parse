@@ -7,18 +7,18 @@ inline auto parse_integer(std::string_view str, uint32_t len, uint32_t& next,
                           uint32_t begin_offset = 0) -> int32_t {
     int32_t result{0};
     if (str.size() < len + next)
-        throw std::invalid_argument("value is not convertible!1");
+        throw std::invalid_argument("value is not convertible!");
     for (auto it{str.begin() + next + begin_offset};
          it != str.begin() + len + next; ++it) {
         if (!std::isdigit(*it))
-            throw std::invalid_argument("value is not convertible!2");
+            throw std::invalid_argument("value is not convertible!");
     }
     auto error = std::from_chars(str.begin() + next + begin_offset,
                                  str.begin() + len + next, result);
 
     next = ++len + next;
     if (error.ec != std::errc())
-        throw std::invalid_argument("value is not convertible!3");
+        throw std::invalid_argument("value is not convertible!");
     return result;
 }
 
