@@ -133,7 +133,7 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
                             }
                         }
                         auto hour_offset_str = std::string_view{date_str.begin() + next + diff,
-                                 date_str.end()};
+                                 date_str.size() - 1};
                         auto pos = hour_offset_str.find(':');
                         auto offset{0};
                         if(pos != std::string::npos){
