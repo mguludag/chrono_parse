@@ -136,7 +136,7 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
             tm.tm_min %= 60;
 
             tm.tm_hour + hour > 23                    ? ++tm.tm_mday,
-                tm.tm_hour = (tm.tm_hour + hour) % 24 : tm.tm_hour += hour;
+                tm.tm_hour = (tm.tm_hour + hour) % 24, (tm.tm_mon > 10 ? ++tm.tm_mon : 0) : tm.tm_hour += hour;
         }
     };
 
