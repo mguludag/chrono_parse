@@ -26,7 +26,8 @@ inline constexpr auto check_range(int32_t value, int32_t min, int32_t max) {
     if (value < min || value > max)
         throw std::out_of_range("value is out of range!");
 }
-  
+
+// inspired from https://sources.debian.org/src/tdb/1.2.1-2/libreplace/timegm.c/
 inline constexpr auto mktime(std::tm& tm) -> std::time_t {
     auto is_leap = [](unsigned y){
     y += 1900;
