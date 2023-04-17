@@ -25,7 +25,8 @@ int main()
 - Currently not supported all format specifiers (at least ISO-8601 capable now)
 - Requires C++17 and upper
 
-## [Performance](https://quick-bench.com/q/iaSDXnfdNtT5zlDPrJB0w6xkZfs)
-- Performance is ~15-20x faster than `std::get_time`
-- ![IzoxBbHDmZX3u8dVXnK-4IJrK7I](https://user-images.githubusercontent.com/12413639/232256177-375e48c7-7456-4c92-b997-c4d4b7c1f39e.png)
+## [Performance](https://quick-bench.com/q/7ZBif24sf4xzkCvcJW5eKc52k4I)
+- Performance is ~20x faster than `std::get_time` and ~70x faster than `std::get_time` + `std::mktime`.
+![YQGFBkGchZxGE5NmE6_6pCtwfRs](https://user-images.githubusercontent.com/12413639/232600915-000eedc2-8fb7-448f-9266-1fad0e751fa2.png)
+
 
