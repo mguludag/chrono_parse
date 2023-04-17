@@ -27,6 +27,7 @@ int main()
 
 ## [Performance](https://quick-bench.com/q/7ZBif24sf4xzkCvcJW5eKc52k4I)
 - Performance is ~20x faster than `std::get_time` and ~70x faster than `std::get_time` + `std::mktime`.
+
 ![YQGFBkGchZxGE5NmE6_6pCtwfRs](https://user-images.githubusercontent.com/12413639/232600915-000eedc2-8fb7-448f-9266-1fad0e751fa2.png)
 
 
