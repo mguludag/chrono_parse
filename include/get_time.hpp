@@ -22,18 +22,27 @@
  * SOFTWARE.
  */
 
+#include <cctype>
 #include <charconv>
 #include <chrono>
+#include <stdexcept>
+#include <string_view>
 #include <type_traits>
 
 namespace mgutility {
+namespace detail {
+
+struct tm : std::tm {
+    uint32_t tm_ms;
+};
+
 inline auto parse_integer(std::string_view str, uint32_t len, uint32_t& next,
                           uint32_t begin_offset = 0) -> int32_t {
     int32_t result{0};
     if (str.size() < len + next)
         throw std::invalid_argument("value is not convertible!");
     for (auto it{str.begin() + next + begin_offset};
-         it != str.begin() + len + next; ++it) {
+         it != str.begin() + len + next - 2; ++it) {
         if (!std::isdigit(*it))
             throw std::invalid_argument("value is not convertible!");
     }
@@ -41,45 +50,41 @@ inline auto parse_integer(std::string_view str, uint32_t len, uint32_t& next,
                                  str.begin() + len + next, result);
 
     next = ++len + next;
+
     if (error.ec != std::errc())
         throw std::invalid_argument("value is not convertible!");
     return result;
 }
 
 inline constexpr auto check_range(int32_t value, int32_t min, int32_t max) {
-    if (value < min || value > max)
+    if (value < min || value > max) {
         throw std::out_of_range("value is out of range!");
+    }
 }
 
 // inspired from https://sources.debian.org/src/tdb/1.2.1-2/libreplace/timegm.c/
 inline constexpr auto mktime(std::tm& tm) -> std::time_t {
-    auto is_leap = [](unsigned y){
-    y += 1900;
-    return (y % 4) == 0 && ((y % 100) != 0 || (y % 400) == 0);
-};
+    auto is_leap = [](unsigned y) {
+        y += 1900;
+        return (y % 4) == 0 && ((y % 100) != 0 || (y % 400) == 0);
+    };
 
-    constexpr unsigned ndays[2][12] ={
+    constexpr unsigned ndays[2][12] = {
         {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
         {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
     std::time_t res{0};
     unsigned i{0};
 
-    if (tm.tm_mon > 12 ||
-        tm.tm_mon < 0 ||
-        tm.tm_mday > 31 ||
-        tm.tm_min > 60 ||
-        tm.tm_sec > 60 ||
-        tm.tm_hour > 24) {
+    if (tm.tm_mon > 12 || tm.tm_mon < 0 || tm.tm_mday > 31 || tm.tm_min > 60 ||
+        tm.tm_sec > 60 || tm.tm_hour > 24) {
         /* invalid tm structure */
         return 0;
     }
-    
-    for (i = 70; i < tm.tm_year; ++i)
-        res += is_leap(i) ? 366 : 365;
-    
-    for (i = 0; i < tm.tm_mon; ++i)
-        res += ndays[is_leap(tm.tm_year)][i];
+
+    for (i = 70; i < tm.tm_year; ++i) res += is_leap(i) ? 366 : 365;
+
+    for (i = 0; i < tm.tm_mon; ++i) res += ndays[is_leap(tm.tm_year)][i];
     res += tm.tm_mday - 1;
     res *= 24;
     res += tm.tm_hour;
@@ -92,7 +97,7 @@ inline constexpr auto mktime(std::tm& tm) -> std::time_t {
 }
 
 template <typename T>
-std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
+std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
     std::string_view format, std::string_view date_str) {
     int32_t count{0};
     uint32_t beg{0}, end{0};
@@ -135,8 +140,9 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
             tm.tm_min += minute;
             tm.tm_min %= 60;
 
-            tm.tm_hour + hour > 23                    ? ++tm.tm_mday,
-                tm.tm_hour = (tm.tm_hour + hour) % 24, (tm.tm_mon > 10 ? ++tm.tm_mon : 0) : tm.tm_hour += hour;
+            tm.tm_hour + hour > 23 ? ++tm.tm_mday,
+                tm.tm_hour = (tm.tm_hour + hour) % 24,
+                (tm.tm_mon > 10 ? ++tm.tm_mon : 0) : tm.tm_hour += hour;
         }
     };
 
@@ -181,11 +187,19 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
                     case 'T': {
                         tm.tm_hour = parse_integer(date_str, 2, next);
                         tm.tm_min = parse_integer(date_str, 2, next);
+
                         tm.tm_sec = parse_integer(date_str, 2, next);
+
                         check_range(tm.tm_hour, 0, 23);
                         check_range(tm.tm_min, 0, 59);
+
                         check_range(tm.tm_sec, 0, 59);
                     } break;
+                    case 'f': {
+                        tm.tm_ms = parse_integer(date_str, 3, next);
+                        check_range(tm.tm_ms, 0, 999);
+                        break;
+                    }
                     case 'z': {
                         char sign{};
                         auto diff{0};
@@ -196,23 +210,26 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
                                 break;
                             }
                         }
-                        auto hour_offset_str = std::string_view{date_str.begin() + next + diff,
-                                 date_str.size() - 1};
+                        auto hour_offset_str =
+                            std::string_view{date_str.begin() + next + diff,
+                                             date_str.size() - 1};
                         auto pos = hour_offset_str.find(':');
                         auto offset{0};
-                        if(pos != std::string::npos){
+                        if (pos != std::string::npos) {
                             next = 0;
-                            auto hour_offset = parse_integer(hour_offset_str, 2, next);
-                            auto min_offset = parse_integer(hour_offset_str, 2, next);
+                            auto hour_offset =
+                                parse_integer(hour_offset_str, 2, next);
+                            auto min_offset =
+                                parse_integer(hour_offset_str, 2, next);
                             offset = hour_offset * 100 + min_offset;
-                        }
-                        else{
-                            if(date_str.size() - next > 5)
-                                throw std::invalid_argument("value is not convertible!");
+                        } else {
+                            if (date_str.size() - next > 5)
+                                throw std::invalid_argument(
+                                    "value is not convertible!");
                             offset = parse_integer(
-                            date_str, date_str.size() - next, next, diff);
+                                date_str, date_str.size() - next, next, diff);
                         }
-                      check_range(offset, 0, 1200);
+                        check_range(offset, 0, 1200);
                         switch (sign) {
                             case '+':
                                 change_date(offset * -1);
@@ -238,13 +255,15 @@ std::enable_if_t<std::is_same_v<std::tm, T>, T> constexpr get_time(
     return tm;
 }
 
-template <typename T>
-std::enable_if_t<std::is_same_v<std::chrono::system_clock::time_point, T>,
-                 T> constexpr get_time(std::string_view format,
-                                             std::string_view date_str) {
-    auto tm = get_time<std::tm>(format, date_str);
-    auto time_t = mgutility::mktime(tm);
-    T clock = std::chrono::system_clock::from_time_t(time_t);
+}  // namespace detail
+
+auto constexpr get_time(std::string_view format, std::string_view date_str)
+    -> std::chrono::system_clock::time_point {
+    auto tm = detail::get_time<detail::tm>(format, date_str);
+    auto time_t = mgutility::detail::mktime(tm);
+    std::chrono::system_clock::time_point clock =
+        std::chrono::system_clock::from_time_t(time_t);
+    clock += std::chrono::milliseconds(tm.tm_ms);
     return clock;
 }
-}
+}  // namespace mgutility
