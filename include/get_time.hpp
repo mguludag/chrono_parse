@@ -201,42 +201,45 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
                         break;
                     }
                     case 'z': {
-                        char sign{};
-                        auto diff{0};
-                        for (auto j{next - 1}; j < date_str.size(); ++j) {
-                            if (date_str[j] == '-' || date_str[j] == '+') {
-                                sign = date_str[j];
-                                diff = j - next + 1;
-                                break;
+                        if (*(date_str.begin() + next - 1) != 'Z') {
+                            char sign{};
+                            auto diff{0};
+                            for (auto j{next - 1}; j < date_str.size(); ++j) {
+                                if (date_str[j] == '-' || date_str[j] == '+') {
+                                    sign = date_str[j];
+                                    diff = j - next + 1;
+                                    break;
+                                }
                             }
-                        }
-                        auto hour_offset_str =
-                            std::string_view{date_str.begin() + next + diff,
-                                             date_str.size() - 1};
-                        auto pos = hour_offset_str.find(':');
-                        auto offset{0};
-                        if (pos < 3 && pos > 0) {
-                            next = 0;
-                            auto hour_offset =
-                                parse_integer(hour_offset_str, 2, next);
-                            auto min_offset =
-                                parse_integer(hour_offset_str, 2, next);
-                            offset = hour_offset * 100 + min_offset;
-                        } else {
-                            if (date_str.size() - next > 4 + diff)
-                                throw std::invalid_argument(
-                                    "value is not convertible!");
-                            offset = parse_integer(
-                                date_str, date_str.size() - next, next, diff);
-                        }
-                        check_range(offset, 0, 1200);
-                        switch (sign) {
-                            case '+':
-                                handle_timezone(offset * -1);
-                                break;
-                            case '-':
-                                handle_timezone(offset);
-                                break;
+                            auto hour_offset_str =
+                                std::string_view{date_str.begin() + next + diff,
+                                                 date_str.size() - 1};
+                            auto pos = hour_offset_str.find(':');
+                            auto offset{0};
+                            if (pos < 3 && pos > 0) {
+                                next = 0;
+                                auto hour_offset =
+                                    parse_integer(hour_offset_str, 2, next);
+                                auto min_offset =
+                                    parse_integer(hour_offset_str, 2, next);
+                                offset = hour_offset * 100 + min_offset;
+                            } else {
+                                if (date_str.size() - next > 4 + diff)
+                                    throw std::invalid_argument(
+                                        "value is not convertible!");
+                                offset = parse_integer(date_str,
+                                                       date_str.size() - next,
+                                                       next, diff);
+                            }
+                            check_range(offset, 0, 1200);
+                            switch (sign) {
+                                case '+':
+                                    handle_timezone(offset * -1);
+                                    break;
+                                case '-':
+                                    handle_timezone(offset);
+                                    break;
+                            }
                         }
                     } break;
                 }
