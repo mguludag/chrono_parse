@@ -260,7 +260,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
 
 }  // namespace detail
 
-auto constexpr get_time(std::string_view format, std::string_view date_str)
+auto get_time(std::string_view format, std::string_view date_str)
     -> std::chrono::system_clock::time_point {
     auto tm = detail::get_time<detail::tm>(format, date_str);
     auto time_t = mgutility::detail::mktime(tm);
