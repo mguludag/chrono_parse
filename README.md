@@ -1,5 +1,5 @@
 # get_time
-parse date and times with {fmt} style into `std::tm` and `std::chrono::time_point` {WIP} 
+parse date and times with {fmt} style into`std::chrono::time_point` {WIP} 
 
 ## Usage
 ```C++
@@ -11,11 +11,7 @@ parse date and times with {fmt} style into `std::tm` and `std::chrono::time_poin
 
 int main()
 {
-  const auto time = mgutility::get_time<std::tm>("{:%F %T}", "2023-04-16 00:05:23");
-  
-  fmt::print("{:%F %T}\n", time);
-  
-  const auto ch_time = mgutility::get_time<std::chrono::system_clock::time_point>("{:%F %T}", "2023-04-16 00:05:23");
+  const auto ch_time = mgutility::get_time("{:%F %T.%f %z}", "2023-04-16 00:05:23.862 +0100");
   
   fmt::print("{:%F %T}\n", ch_time);
 }
