@@ -1,7 +1,7 @@
 # get_time
 parse date and times with {fmt} style into`std::chrono::time_point` {WIP} 
 
-## Usage
+## [Usage](https://godbolt.org/z/cvhPxMMGq)
 ```C++
 #include "get_time.hpp"
 
@@ -9,11 +9,10 @@ parse date and times with {fmt} style into`std::chrono::time_point` {WIP}
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 
-int main()
-{
-  const auto ch_time = mgutility::get_time("{:%F %T.%f %z}", "2023-04-16 00:05:23.862 +0100");
-  
-  fmt::print("{:%F %T}\n", ch_time);
+int main() {
+    const auto chrono_time = mgutility::get_time("{:%FT%T.%f%z}", "2023-04-16T00:05:23.999+0100");
+
+    fmt::print("{:%F %T}\n", chrono_time); // prints 2023-04-15 23:05:23.999000000 ({fmt} trunk version)
 }
 ```
 
