@@ -123,7 +123,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
 
     T tm{};
 
-    auto change_date = [&tm](int32_t offset) {
+    auto handle_timezone = [&tm](int32_t offset) {
         const auto minute = offset % 100;
         const auto hour = offset / 100;
         if (offset < 0) {
@@ -132,8 +132,8 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
             tm.tm_min -= minute;
             tm.tm_min %= 60;
 
-            tm.tm_hour + hour < 0      ? --tm.tm_mday,
-                tm.tm_hour = 24 + hour : tm.tm_hour += hour;
+            tm.tm_hour + hour < 0 ? --tm.tm_mday, tm.tm_hour = 24 + hour 
+                : tm.tm_hour += hour;
         } else {
             tm.tm_min + minute > 59 ? tm.tm_hour + 1 > 23 ? ++tm.tm_mday,
                 ++tm.tm_hour %= 24 : ++tm.tm_hour : 0;
@@ -215,7 +215,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
                                              date_str.size() - 1};
                         auto pos = hour_offset_str.find(':');
                         auto offset{0};
-                        if (pos != std::string::npos) {
+                        if (pos < 3 && pos > 0) {
                             next = 0;
                             auto hour_offset =
                                 parse_integer(hour_offset_str, 2, next);
@@ -223,7 +223,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
                                 parse_integer(hour_offset_str, 2, next);
                             offset = hour_offset * 100 + min_offset;
                         } else {
-                            if (date_str.size() - next > 5)
+                            if (date_str.size() - next > 4)
                                 throw std::invalid_argument(
                                     "value is not convertible!");
                             offset = parse_integer(
@@ -232,10 +232,10 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
                         check_range(offset, 0, 1200);
                         switch (sign) {
                             case '+':
-                                change_date(offset * -1);
+                                handle_timezone(offset * -1);
                                 break;
                             case '-':
-                                change_date(offset);
+                                handle_timezone(offset);
                                 break;
                         }
                     } break;
