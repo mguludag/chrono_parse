@@ -223,7 +223,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
                                 parse_integer(hour_offset_str, 2, next);
                             offset = hour_offset * 100 + min_offset;
                         } else {
-                            if (date_str.size() - next > 4)
+                            if (date_str.size() - next > 4 + diff)
                                 throw std::invalid_argument(
                                     "value is not convertible!");
                             offset = parse_integer(
