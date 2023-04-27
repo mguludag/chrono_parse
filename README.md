@@ -20,10 +20,11 @@ int main() {
 - Currently not supported all format specifiers (at least ISO-8601 capable now)
 - Requires C++17 and upper
 
-## [Performance](https://quick-bench.com/q/P2FgpMZs9Cv9pq8vk8G-es_q9G4)
-- Performance is ~20x faster than `std::get_time` and ~70x faster than `std::get_time` + `std::mktime`.
+## [Performance](https://quick-bench.com/q/ry5gUzPplSBQenbLVBqRt1ns2-k)
+- Performance is ~50x faster than `std::get_time` + `std::mktime`.
 
-![P2FgpMZs9Cv9pq8vk8G-es_q9G4](https://user-images.githubusercontent.com/12413639/232605091-564e4e85-df24-489e-b582-8181bab2b14e.png)
+![ry5gUzPplSBQenbLVBqRt1ns2-k](https://user-images.githubusercontent.com/12413639/234938992-93cd1cb0-3a17-4466-99ae-b08cd3d3c8ff.png)
+
 
 
 
