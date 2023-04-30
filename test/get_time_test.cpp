@@ -9,4 +9,5 @@ TEST_CASE("testing the iso8601 parsing") {
     CHECK(mgutility::get_time("{:%FT%T%z}", "2023-04-30T16:22:18-0200").time_since_epoch().count() == 1682878938000000000);
     CHECK(mgutility::get_time("{:%FT%T.%f}", "2023-04-30T16:22:18.500").time_since_epoch().count() == 1682871738500000000);
     CHECK(mgutility::get_time("{:%FT%T.%f%z}", "2023-04-30T16:22:18.500+0100").time_since_epoch().count() == 1682868138500000000);
+    REQUIRE_THROWS(mgutility::get_time("{:%F %T}", "2023-04-30T16:22:18"));
 }
