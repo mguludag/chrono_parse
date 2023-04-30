@@ -7,3 +7,5 @@ include_directories(AFTER PUBLIC  ${CMAKE_SOURCE_DIR}/include)
 
 add_executable(${PROJECT_NAME} get_time_test.cpp)
 target_link_libraries(${PROJECT_NAME} doctest)
+
+add_test(NAME get_time_test COMMAND get_time_test)
