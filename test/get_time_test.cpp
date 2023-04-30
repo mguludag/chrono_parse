@@ -4,7 +4,7 @@
 
 #if defined(__GNUC__)
 #define FACTOR 1000
-#elif defined(__clang__) && !defined(__GNUC__)
+#else
 #define FACTOR 1
 #endif
 
