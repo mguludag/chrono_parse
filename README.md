@@ -25,8 +25,8 @@ int main() {
 | `%H` | parses **hour** as a decimal number, e.g. 16 |
 | `%M` | parses **minute** as a decimal number, e.g. 31 |
 | `%S` | parses **second** as a decimal number, e.g. 59 |
-| `%F` | parses **year-month-day** as a iso8601 date, e.g. 2023-05-04 |
-| `%T` | parses **hour:minute:second** as a iso8601 time, e.g. 16:31:59 |
+| `%F` | parses **year-month-day** as an iso8601 date, e.g. 2023-05-04 |
+| `%T` | parses **hour:minute:second** as an iso8601 time, e.g. 16:31:59 |
 | `%f` | parses **milliseconds** as a decimal number, e.g. 869 |
 | `%z` | parses **timezone** as a decimal number, e.g. +0100 or -01:00 or Z |
 
