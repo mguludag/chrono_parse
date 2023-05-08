@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <array>
 #include <cctype>
 #include <charconv>
 #include <chrono>
@@ -64,36 +65,40 @@ inline constexpr auto check_range(int32_t value, int32_t min, int32_t max) {
 
 // inspired from https://sources.debian.org/src/tdb/1.2.1-2/libreplace/timegm.c/
 inline constexpr auto mktime(std::tm& tm) -> std::time_t {
-    auto is_leap = [](unsigned y) {
-        y += 1900;
-        return (y % 4) == 0 && ((y % 100) != 0 || (y % 400) == 0);
+    auto constexpr is_leap_year = [](uint32_t year) {
+        return (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
     };
 
-    constexpr unsigned ndays[2][12] = {
-        {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-        {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
+    constexpr std::array<std::array<uint32_t, 12>, 2> num_of_days{
+        {{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},    // 365
+         {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}}};  // 366
 
-    std::time_t res{0};
-    unsigned i{0};
+    std::time_t result{0};
 
     if (tm.tm_mon > 12 || tm.tm_mon < 0 || tm.tm_mday > 31 || tm.tm_min > 60 ||
         tm.tm_sec > 60 || tm.tm_hour > 24) {
-        /* invalid tm structure */
-        return 0;
+        throw std::out_of_range("value is out of range!");
     }
 
-    for (i = 70; i < tm.tm_year; ++i) res += is_leap(i) ? 366 : 365;
+    tm.tm_year += 1900;
 
-    for (i = 0; i < tm.tm_mon; ++i) res += ndays[is_leap(tm.tm_year)][i];
-    res += tm.tm_mday - 1;
-    res *= 24;
-    res += tm.tm_hour;
-    res *= 60;
-    res += tm.tm_min;
-    res *= 60;
-    res += tm.tm_sec;
+    for (auto i{1970}; i < tm.tm_year; ++i) {
+        result += is_leap_year(i) ? 366 : 365;
+    }
 
-    return res;
+    for (auto i{0}; i < tm.tm_mon; ++i) {
+        result += num_of_days[is_leap_year(tm.tm_year)][i];
+    }
+
+    result += tm.tm_mday - 1;  // nth day since 1970
+    result *= 24;
+    result += tm.tm_hour;
+    result *= 60;
+    result += tm.tm_min;
+    result *= 60;
+    result += tm.tm_sec;
+
+    return result;
 }
 
 template <typename T>
