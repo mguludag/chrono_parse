@@ -21,6 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef MGUTILITY_CHRONO_PARSE_HPP
+#define MGUTILITY_CHRONO_PARSE_HPP
 
 #include <array>
 #include <cctype>
@@ -277,3 +279,5 @@ auto parse(std::string_view format, std::string_view date_str)
 }
 }  // namespace chrono
 }  // namespace mgutility
+
+#endif // MGUTILITY_CHRONO_PARSE_HPP
