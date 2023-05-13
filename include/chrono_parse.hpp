@@ -31,6 +31,7 @@
 #include <type_traits>
 
 namespace mgutility {
+namespace chrono{
 namespace detail {
 
 struct tm : std::tm {
@@ -265,7 +266,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
 
 }  // namespace detail
 
-auto get_time(std::string_view format, std::string_view date_str)
+auto parse(std::string_view format, std::string_view date_str)
     -> std::chrono::system_clock::time_point {
     auto tm = detail::get_time<detail::tm>(format, date_str);
     auto time_t = mgutility::detail::mktime(tm);
@@ -274,4 +275,5 @@ auto get_time(std::string_view format, std::string_view date_str)
     clock += std::chrono::milliseconds(tm.tm_ms);
     return clock;
 }
+}  // namespace chrono
 }  // namespace mgutility
