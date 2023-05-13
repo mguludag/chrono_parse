@@ -271,7 +271,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
 auto parse(std::string_view format, std::string_view date_str)
     -> std::chrono::system_clock::time_point {
     auto tm = detail::get_time<detail::tm>(format, date_str);
-    auto time_t = mgutility::detail::mktime(tm);
+    auto time_t = detail::mktime(tm);
     std::chrono::system_clock::time_point clock =
         std::chrono::system_clock::from_time_t(time_t);
     clock += std::chrono::milliseconds(tm.tm_ms);
