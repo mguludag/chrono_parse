@@ -50,8 +50,8 @@ inline auto parse_integer(std::string_view str, uint32_t len, uint32_t& next,
         if (!std::isdigit(*it))
             throw std::invalid_argument("value is not convertible!");
     }
-    auto error = std::from_chars(str.begin() + next + begin_offset,
-                                 str.begin() + len + next, result);
+    auto error = std::from_chars(str.data() + next + begin_offset,
+                                 str.data() + len + next, result);
 
     next = ++len + next;
 
@@ -220,7 +220,7 @@ std::enable_if_t<std::is_base_of_v<std::tm, T>, T> constexpr get_time(
                                 }
                             }
                             auto hour_offset_str =
-                                std::string_view{date_str.begin() + next + diff,
+                                std::string_view{date_str.data() + next + diff,
                                                  date_str.size() - 1};
                             auto pos = hour_offset_str.find(':');
                             auto offset{0};
