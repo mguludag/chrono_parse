@@ -26,6 +26,10 @@ SOFTWARE.
 #include "mgutility/_common/definitions.hpp"
 #include <system_error>
 
+#if MGUTILITY_CPLUSPLUS >= 201703L
+#include <charconv>
+#endif
+
 namespace mgutility {
 
 #if MGUTILITY_CPLUSPLUS < 201703L
@@ -92,10 +96,9 @@ MGUTILITY_CNSTXPR auto from_chars(const char *first, const char *last,
   return {it, std::errc{}};
 }
 #else
-#include <charconv>
 
 using from_chars_result = std::from_chars_result;
-using from_chars = std::from_chars;
+using std::from_chars;
 
 #endif
 

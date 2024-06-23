@@ -31,6 +31,10 @@ SOFTWARE.
 
 #include "mgutility/_common/definitions.hpp"
 
+#if MGUTILITY_CPLUSPLUS >= 201703L
+#include <string_view>
+#endif
+
 namespace mgutility {
 
 #if MGUTILITY_CPLUSPLUS < 201703L
@@ -303,7 +307,6 @@ private:
 using string_view = basic_string_view<char>;
 
 #else
-#include <string_view>
 
 using string_view = std::string_view;
 
