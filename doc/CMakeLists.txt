@@ -10,5 +10,5 @@ set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_BINARY_DIR}/main.md")
 
 doxygen_add_docs(
     doc
-    "${PROJECT_SOURCE_DIR}"
+    "${PROJECT_SOURCE_DIR}/include"
 )
