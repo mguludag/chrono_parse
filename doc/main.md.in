@@ -1,0 +1,5 @@
+# Main page
+
+parse date and times with {fmt} style intostd::chrono::time_point {WIP} written in C++>=11
+
+Version: @PROJECT_VERSION@
