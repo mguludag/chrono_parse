@@ -2,7 +2,7 @@
 #include "doctest/doctest.h"
 #include "mgutility/chrono/parse.hpp"
 
-#if defined(__GNUC__) //&& !defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__)
 #define FACTOR 1000
 #else
 #define FACTOR 1

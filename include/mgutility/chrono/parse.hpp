@@ -55,7 +55,7 @@ struct tm : std::tm {
  * @return int32_t The parsed integer.
  * @throws std::invalid_argument if the value is not convertible.
  */
-MGUTILITY_CNSTXPR auto parse_integer(mgutility::string_view str, uint32_t len,
+auto parse_integer(mgutility::string_view str, uint32_t len,
                                      uint32_t &next, uint32_t begin_offset = 0) -> int32_t {
   int32_t result{0};
 
