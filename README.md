@@ -1,7 +1,7 @@
 # chrono_parse
 parse date and times with {fmt} style into`std::chrono::time_point` {WIP} 
 
-## [Usage](https://godbolt.org/z/h31q3Mez5)
+## [Usage](https://godbolt.org/z/nb3qdMYza)
 ```C++
 #include "chrono_parse.hpp"
 

@@ -79,7 +79,7 @@ MGUTILITY_CNSTXPR auto parse_integer(mgutility::string_view str, uint32_t len,
  * @param max The maximum acceptable value.
  * @throws std::out_of_range if the value is out of range.
  */
-constexpr auto check_range(int32_t value, int32_t min, int32_t max) -> void {
+MGUTILITY_CNSTXPR auto check_range(int32_t value, int32_t min, int32_t max) -> void {
   if (value < min || value > max) {
     throw std::out_of_range("value is out of range!");
   }
@@ -226,7 +226,7 @@ MGUTILITY_CNSTXPR auto get_time(string_view format, string_view date_str) -> det
         else if (count != 0 && end < begin) break;
     }
 
-    if (format[begin + 1] != ':' && end - begin < 3 || count != 0)
+    if (format[begin + 1] != ':' || (end - begin < 3 || count != 0))
         throw std::invalid_argument("invalid format string!");
 
     detail::tm tm{};
