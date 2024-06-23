@@ -32,7 +32,6 @@ int main() {
 
 ## Notes
 - Currently not supported all format specifiers (at least ISO-8601 capable now)
-- Requires C++17 and upper
 
 ## [Performance](https://quick-bench.com/q/ry5gUzPplSBQenbLVBqRt1ns2-k)
 - Performance is ~50x faster than `std::get_time` + `std::mktime`.

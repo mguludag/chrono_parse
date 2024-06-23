@@ -47,7 +47,7 @@ runs:
 
     - name: CMake configuration
       shell: bash
-      run:  cmake ${{ inputs.cmake_configure_args }} -B ${{ inputs.build_dir }} -DENUM_NAME_BUILD_DOCS=ON
+      run:  cmake ${{ inputs.cmake_configure_args }} -B ${{ inputs.build_dir }} -DCHRONO_PARSE_BUILD_DOCS=ON
 
     - name: CMake build
       shell: bash
