@@ -1,25 +1,25 @@
-name: 'update-version-selector'
-description: 'Updates version selector'
+name: "update-version-selector"
+description: "Updates version selector"
 inputs:
   github_token:
-    description: 'GitHub token'
+    description: "GitHub token"
     required: true
   temp_dir:
-    description: 'Directory where version selector file will be generated'
+    description: "Directory where version selector file will be generated"
     required: false
-    default: 'selector-dir'
+    default: "selector-dir"
   file_name:
-    description: 'Selector file name'
+    description: "Selector file name"
     required: false
-    default: 'version_selector.html'
+    default: "version_selector.html"
   selector_id:
-    description: 'select element id'
+    description: "select element id"
     required: false
-    default: 'versionSelector'
+    default: "versionSelector"
   docs_branch:
-    description: 'Documentation branch'
+    description: "Documentation branch"
     required: false
-    default: 'gh-pages'
+    default: "gh-pages"
 outputs:
   versions_counter:
     description: "Number of existing versions"

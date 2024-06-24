@@ -1,35 +1,35 @@
-name: 'build-docs'
-description: 'Builds documentation using Doxygen'
+name: "build-docs"
+description: "Builds documentation using Doxygen"
 inputs:
   cmake_target:
-    description: 'CMake documentation target'
+    description: "CMake documentation target"
     required: true
   docs_dir:
-    description: 'Path to documentation dir, relative to build_dir'
+    description: "Path to documentation dir, relative to build_dir"
     required: true
   github_token:
-    description: 'GitHub token'
+    description: "GitHub token"
     required: true
   build_dir:
-    description: 'Build directory'
+    description: "Build directory"
     required: false
-    default: 'build'
+    default: "build"
   cmake_configure_args:
-    description: 'Additional CMake configure arguments'
+    description: "Additional CMake configure arguments"
     required: false
-    default: ''
+    default: ""
   destination_dir:
-    description: 'Directory name for deployed docs'
+    description: "Directory name for deployed docs"
     required: false
-    default: ''
+    default: ""
   docs_branch:
-    description: 'Documentation branch'
+    description: "Documentation branch"
     required: false
-    default: 'gh-pages'
+    default: "gh-pages"
 
 outputs:
   version:
-    description: 'Version of the generated docs'
+    description: "Version of the generated docs"
     value: ${{ steps.get-docs-version.outputs.version }}
 
 runs:
@@ -37,21 +37,21 @@ runs:
   steps:
     - name: Install deps
       shell: bash
-      run:   |
-              sudo apt install -y cmake
-              sudo apt install -y wget
-              cd ~
-              wget -nv https://www.doxygen.nl/files/doxygen-1.10.0.linux.bin.tar.gz
-              tar -xzf doxygen-1.10.0.linux.bin.tar.gz
-              echo "$(pwd)/doxygen-1.10.0/bin" >> $GITHUB_PATH
+      run: |
+        sudo apt install -y cmake
+        sudo apt install -y wget
+        cd ~
+        wget -nv https://www.doxygen.nl/files/doxygen-1.10.0.linux.bin.tar.gz
+        tar -xzf doxygen-1.10.0.linux.bin.tar.gz
+        echo "$(pwd)/doxygen-1.10.0/bin" >> $GITHUB_PATH
 
     - name: CMake configuration
       shell: bash
-      run:  cmake ${{ inputs.cmake_configure_args }} -B ${{ inputs.build_dir }} -DCHRONO_PARSE_BUILD_DOCS=ON
+      run: cmake ${{ inputs.cmake_configure_args }} -B ${{ inputs.build_dir }} -DCHRONO_PARSE_BUILD_DOCS=ON
 
     - name: CMake build
       shell: bash
-      run:  cmake --build ${{ inputs.build_dir }} --target ${{ inputs.cmake_target }}
+      run: cmake --build ${{ inputs.build_dir }} --target ${{ inputs.cmake_target }}
 
     - name: Get docs version
       id: get-docs-version
