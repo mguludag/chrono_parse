@@ -50,5 +50,6 @@
     "cinttypes": "cpp",
     "typeinfo": "cpp",
     "iomanip": "cpp"
-  }
+  },
+  "cmake.generator": "Unix Makefiles"
 }
