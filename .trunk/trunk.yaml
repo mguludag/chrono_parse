@@ -18,6 +18,7 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
+    - clang-tidy@16.0.3
     - clang-format@16.0.3
     - actionlint@1.7.1
     - checkov@3.2.144
