@@ -25,6 +25,8 @@
 #ifndef MGUTILITY_CHRONO_PARSE_HPP
 #define MGUTILITY_CHRONO_PARSE_HPP
 
+// trunk-ignore-all(clang-format)
+
 #include "mgutility/std/charconv.hpp"
 #include "mgutility/std/string_view.hpp"
 
