@@ -79,8 +79,8 @@ MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
  * @param max The maximum acceptable value.
  * @throws std::out_of_range if the value is out of range.
  */
-MGUTILITY_CNSTXPR auto check_range(int32_t value, int32_t min, int32_t max)
-    -> std::errc {
+ template <typename T = int32_t>
+MGUTILITY_CNSTXPR auto check_range(const T& value, const int32_t& min, const int32_t& max) -> std::errc {
   if (value < min || value > max) {
     return std::errc::result_out_of_range;
   }
@@ -128,6 +128,7 @@ MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct) -> std:
 
   // Add the days for the current year
   for (auto i{0}; i < time_struct.tm_mon; ++i) {
+    //NOLINTNEXTLINE(readability-implicit-bool-conversion cppcoreguidelines-pro-bounds-constant-array-index)
     result += num_of_days[is_leap_year(time_struct.tm_year)][i];
   }
 
@@ -344,8 +345,11 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
         error = parse_day(result, date_str, next);
         break;
       case 'F': {
+        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_year(result, date_str, next);
+        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_month(result, date_str, next);
+        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_day(result, date_str, next);
       } break;
       case 'H':
@@ -358,8 +362,11 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
         error = parse_second(result, date_str, next);
         break;
       case 'T': {
+        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_hour(result, date_str, next);
+        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_minute(result, date_str, next);
+        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_second(result, date_str, next);
       } break;
       case 'f':
@@ -405,18 +412,18 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
 template <typename Clock = std::chrono::system_clock>
 auto parse(typename Clock::time_point &time_point, string_view format,
            string_view date_str) -> std::error_code {
-  detail::tm tm{};
-  auto error = detail::get_time(tm, format, date_str);
+  detail::tm time_struct{};
+  auto error = detail::get_time(time_struct, format, date_str);
   if (error != std::errc{}) {
     return std::make_error_code(error);
   }
   std::time_t time_t{};
-  error = detail::mktime(time_t, tm);
+  error = detail::mktime(time_t, time_struct);
   if (error != std::errc{}) {
     return std::make_error_code(error);
   }
   time_point = Clock::from_time_t(time_t);
-  time_point += std::chrono::milliseconds(tm.tm_ms);
+  time_point += std::chrono::milliseconds(time_struct.tm_ms);
   return std::error_code{};
 }
 
