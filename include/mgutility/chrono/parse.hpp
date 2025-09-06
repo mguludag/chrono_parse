@@ -59,7 +59,7 @@ struct tm : std::tm {
  * @return int32_t The parsed integer.
  * @throws std::invalid_argument if the value is not convertible.
  */
-template <typename T = int32_t>
+template <typename T>
 MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
                                      uint32_t len, uint32_t &next,
                                      uint32_t begin_offset = 0) -> std::errc {
@@ -79,8 +79,8 @@ MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
  * @param max The maximum acceptable value.
  * @throws std::out_of_range if the value is out of range.
  */
- template <typename T = int32_t>
-MGUTILITY_CNSTXPR auto check_range(const T& value, const int32_t& min, const int32_t& max) -> std::errc {
+ template <typename T>
+MGUTILITY_CNSTXPR auto check_range(const T& value, const T& min, const T& max) -> std::errc {
   if (value < min || value > max) {
     return std::errc::result_out_of_range;
   }
@@ -93,7 +93,7 @@ MGUTILITY_CNSTXPR auto check_range(const T& value, const int32_t& min, const int
  * @param year The year to check.
  * @return bool True if the year is a leap year, false otherwise.
  */
-auto MGUTILITY_CNSTXPR is_leap_year(uint32_t year) -> bool {
+auto MGUTILITY_CNSTXPR is_leap_year(int32_t year) -> bool {
   return (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
 }
 
@@ -129,7 +129,7 @@ MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct) -> std:
   // Add the days for the current year
   for (auto i{0}; i < time_struct.tm_mon; ++i) {
     //NOLINTNEXTLINE
-    result += num_of_days[is_leap_year(time_struct.tm_year)][i];
+    result += num_of_days[is_leap_year(time_struct.tm_year)][static_cast<std::size_t>(i)];
   }
 
   result += time_struct.tm_mday - 1; // nth day since 1970
@@ -260,7 +260,7 @@ MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
   if (error != std::errc{}) {
     return error;
   }
-  error = check_range(result.tm_ms, 0, 999);
+  error = check_range(result.tm_ms, 0U, 999U);
   return error;
 }
 
