@@ -37,8 +37,18 @@ int main() {
 
 - Currently not supported all format specifiers (at least ISO-8601 capable now)
 
-## [Performance](https://quick-bench.com/q/ry5gUzPplSBQenbLVBqRt1ns2-k)
+## [Performance](https://quick-bench.com/q/6O2Ctb9wRnkvx_kHeq40xbYJu6A)
 
-- Performance is ~50x faster than `std::get_time` + `std::mktime`.
+- Performance is ~20x faster than `std::get_time` + `std::mktime`.
 
-![ry5gUzPplSBQenbLVBqRt1ns2-k](https://user-images.githubusercontent.com/12413639/234938992-93cd1cb0-3a17-4466-99ae-b08cd3d3c8ff.png)
+> <img width="1658" height="829" alt="FuYJ4VJsqNsVqQ2Z92zbyToPDAA" src="https://github.com/user-attachments/assets/947daa7e-0e53-473a-82d0-fb2867ef76db" />
+> clang 17 libc++ c++23 -OFast
+
+> <img width="1658" height="829" alt="37g7u6VRsTnA-NuvD_QuKdbo6TA" src="https://github.com/user-attachments/assets/c21cbaf8-134f-4d29-8b05-fa50d9e78098" />
+> clang 17 libstdc++ c++23 -OFast
+
+> <img width="1658" height="829" alt="6O2Ctb9wRnkvx_kHeq40xbYJu6A" src="https://github.com/user-attachments/assets/874f25d5-8368-434d-a722-b73f6e9dea0d" />
+> gcc 13.2 libstdc++ c++23 -OFast
+
+
+
