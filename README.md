@@ -2,7 +2,7 @@
 
 parse date and times with {fmt} style into`std::chrono::time_point` {WIP}
 
-## [Usage](https://godbolt.org/z/nb3qdMYza)
+## [Usage](https://godbolt.org/z/PE3s1Y35d)
 
 ```C++
 #include "mgutility/chrono/parse.hpp"
