@@ -56,8 +56,9 @@ struct tm : std::tm {
  * @throws std::invalid_argument if the value is not convertible.
  */
 template <typename T = int32_t>
-auto parse_integer(T &result, mgutility::string_view str, uint32_t len,
-                   uint32_t &next, uint32_t begin_offset = 0) -> std::errc {
+MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
+                                     uint32_t len, uint32_t &next,
+                                     uint32_t begin_offset = 0) -> std::errc {
   result = 0;
 
   auto error = mgutility::from_chars(str.data() + next + begin_offset,
@@ -199,6 +200,56 @@ MGUTILITY_CNSTXPR auto handle_timezone(tm &tm, int32_t offset) -> void {
   }
 }
 
+// Free parsing functions
+MGUTILITY_CNSTXPR auto parse_year(detail::tm &result, string_view date_str,
+                                  uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_year, date_str, 4, next);
+  result.tm_year %= 1900;
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_month(detail::tm &result, string_view date_str,
+                                   uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_mon, date_str, 2, next);
+  result.tm_mon -= 1;
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_day(detail::tm &result, string_view date_str,
+                                 uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_mday, date_str, 2, next);
+  error = check_range(result.tm_mday, 1, 31);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_hour(detail::tm &result, string_view date_str,
+                                  uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_hour, date_str, 2, next);
+  error = check_range(result.tm_hour, 0, 23);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_minute(detail::tm &result, string_view date_str,
+                                    uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_min, date_str, 2, next);
+  error = check_range(result.tm_min, 0, 59);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_second(detail::tm &result, string_view date_str,
+                                    uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_sec, date_str, 2, next);
+  error = check_range(result.tm_sec, 0, 59);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
+                                      uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_ms, date_str, 3, next);
+  error = check_range(result.tm_ms, 0, 999);
+  return error;
+}
+
 /**
  * @brief Parses a date and time string according to a specified format.
  *
@@ -237,57 +288,6 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
   uint32_t next{0};
   std::errc error{};
 
-  auto has_error = [&error]() { return error != std::errc{}; };
-
-  auto parse_year = [&error, &next, &date_str, &result,
-                     &has_error]() -> std::errc {
-    error = parse_integer(result.tm_year, date_str, 4, next);
-    result.tm_year %= 1900;
-    return error;
-  };
-
-  auto parse_month = [&error, &next, &date_str, &result,
-                      &has_error]() -> std::errc {
-    error = parse_integer(result.tm_mon, date_str, 2, next);
-    result.tm_mon -= 1;
-    return error;
-  };
-
-  auto parse_day = [&error, &next, &date_str, &result,
-                    &has_error]() -> std::errc {
-    error = parse_integer(result.tm_mday, date_str, 2, next);
-    error = check_range(result.tm_mday, 1, 31);
-    return error;
-  };
-
-  auto parse_hour = [&error, &next, &date_str, &result,
-                     &has_error]() -> std::errc {
-    error = parse_integer(result.tm_hour, date_str, 2, next);
-    error = check_range(result.tm_hour, 0, 23);
-    return error;
-  };
-
-  auto parse_minute = [&error, &next, &date_str, &result,
-                       &has_error]() -> std::errc {
-    error = parse_integer(result.tm_min, date_str, 2, next);
-    error = check_range(result.tm_min, 0, 59);
-    return error;
-  };
-
-  auto parse_second = [&error, &next, &date_str, &result,
-                       &has_error]() -> std::errc {
-    error = parse_integer(result.tm_sec, date_str, 2, next);
-    error = check_range(result.tm_sec, 0, 59);
-    return error;
-  };
-
-  auto parse_fraction = [&error, &next, &date_str, &result,
-                         &has_error]() -> std::errc {
-    error = parse_integer(result.tm_ms, date_str, 3, next);
-    error = check_range(result.tm_ms, 0, 999);
-    return error;
-  };
-
   // Parse the date and time string based on the format specifiers
   for (auto i{begin}; i < end; ++i) {
     switch (format[i]) {
@@ -297,72 +297,72 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
       }
       switch (format[i + 1]) {
       case 'Y': // Year with century (4 digits)
-        error = parse_year();
-        if (has_error()) {
+        error = parse_year(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
       case 'm': // Month (01-12)
-        error = parse_month();
-        if (has_error()) {
+        error = parse_month(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
       case 'd': // Day of the month (01-31)
-        error = parse_day();
-        if (has_error()) {
+        error = parse_day(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
       case 'F': { // Full date (YYYY-MM-DD)
-        error = parse_year();
-        if (has_error()) {
+        error = parse_year(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
-        error = parse_month();
-        if (has_error()) {
+        error = parse_month(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
-        error = parse_day();
-        if (has_error()) {
+        error = parse_day(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
       } break;
       case 'H': // Hour (00-23)
-        error = parse_hour();
-        if (has_error()) {
+        error = parse_hour(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
       case 'M': // Minute (00-59)
-        error = parse_minute();
-        if (has_error()) {
+        error = parse_minute(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
       case 'S': // Second (00-59)
-        error = parse_second();
-        if (has_error()) {
+        error = parse_second(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
       case 'T': { // Full time (HH:MM:SS)
-        error = parse_hour();
-        if (has_error()) {
+        error = parse_hour(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
-        error = parse_minute();
-        if (has_error()) {
+        error = parse_minute(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
-        error = parse_second();
-        if (has_error()) {
+        error = parse_second(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
       } break;
       case 'f': // Milliseconds (000-999)
-        error = parse_fraction();
-        if (has_error()) {
+        error = parse_fraction(result, date_str, next);
+        if (error != std::errc{}) {
           return error;
         }
         break;
@@ -386,11 +386,11 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
             int32_t hour_offset{0};
             int32_t min_offset{0};
             error = parse_integer(hour_offset, hour_offset_str, 2, next);
-            if (has_error()) {
+            if (error != std::errc{}) {
               return error;
             }
             error = parse_integer(min_offset, hour_offset_str, 2, next);
-            if (has_error()) {
+            if (error != std::errc{}) {
               return error;
             }
             offset = hour_offset * 100 + min_offset;
@@ -400,12 +400,12 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
             }
             error = parse_integer(offset, date_str, date_str.size() - next,
                                   next, diff);
-            if (has_error()) {
+            if (error != std::errc{}) {
               return error;
             }
           }
           error = check_range(offset, 0, 1200);
-          if (has_error()) {
+          if (error != std::errc{}) {
             return error;
           }
           switch (sign) {
