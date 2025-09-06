@@ -82,4 +82,15 @@ SOFTWARE.
 #define MGUTILITY_CNSTEVL
 #endif
 
+/**
+ * @brief Detects if the compiler is Clang and its version is less than 7.
+ *
+ * If the compiler is Clang and its major version is less than 7,
+ * CLANG_NO_CHARCONV is defined. This is used to indicate that the
+ * <charconv> header is not fully supported in these versions of Clang.
+ */
+#if defined(__clang__) && __clang_major__ < 7
+#define CLANG_NO_CHARCONV
+#endif
+
 #endif // MGUTILITY_COMMON_DEFINITIONS_HPP
