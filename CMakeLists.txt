@@ -5,6 +5,11 @@ project(
   VERSION 1.0
   LANGUAGES CXX)
 
+option(CHRONO_PARSE_BUILD_DOCS "Build documentation" OFF)
+option(CHRONO_PARSE_BUILD_EXAMPLE "Build example" ON)
+option(CHRONO_PARSE_NO_INSTALL "Skip installation of enum_name" OFF)
+option(CHRONO_PARSE_NO_TESTS "Skip testing of enum_name" OFF)
+
 # Define the library
 add_library(chrono_parse INTERFACE)
 add_library(mgutility::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
@@ -65,21 +70,23 @@ if(NOT ${CHRONO_PARSE_NO_INSTALL})
     NAMESPACE mgutility::)
 endif()
 
-# FetchContent to get the fmt library
-include(FetchContent)
-FetchContent_Declare(
-  fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 8.1.1) # Change the tag to the desired version
-FetchContent_MakeAvailable(fmt)
+if(${CHRONO_PARSE_BUILD_EXAMPLE})
+  # FetchContent to get the fmt library
+  include(FetchContent)
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 8.1.1) # Change the tag to the desired version
+  FetchContent_MakeAvailable(fmt)
 
-# Add example executable
-add_executable(example_chrono_parse example/main.cpp)
+  # Add example executable
+  add_executable(example_chrono_parse example/main.cpp)
 
-# Link the example executable with the library
-target_link_libraries(example_chrono_parse PRIVATE mgutility::chrono_parse fmt::fmt)
+  # Link the example executable with the library
+  target_link_libraries(example_chrono_parse PRIVATE mgutility::chrono_parse fmt::fmt)
+endif()
 
-# if(NOT ${CHRONO_PARSE_NO_TESTS})
+if(NOT ${CHRONO_PARSE_NO_TESTS})
   # Enable testing
   enable_testing()
 
@@ -100,7 +107,7 @@ target_link_libraries(example_chrono_parse PRIVATE mgutility::chrono_parse fmt::
 
   # Add tests
   add_test(NAME test_chrono_parse COMMAND test_chrono_parse)
-# endif()
+endif()
 
 if(${CHRONO_PARSE_BUILD_DOCS})
   add_subdirectory(doc)
