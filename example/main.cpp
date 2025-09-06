@@ -1,5 +1,7 @@
 #include "mgutility/chrono/parse.hpp"
 
+// trunk-ignore-all(clang-format)
+
 // {fmt} for printing
 #include <fmt/chrono.h>
 #include <fmt/format.h>
