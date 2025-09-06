@@ -128,7 +128,7 @@ MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct) -> std:
 
   // Add the days for the current year
   for (auto i{0}; i < time_struct.tm_mon; ++i) {
-    //NOLINTNEXTLINE(readability-implicit-bool-conversion cppcoreguidelines-pro-bounds-constant-array-index)
+    //NOLINTNEXTLINE
     result += num_of_days[is_leap_year(time_struct.tm_year)][i];
   }
 
