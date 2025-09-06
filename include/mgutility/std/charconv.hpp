@@ -62,9 +62,10 @@ constexpr auto char_to_int(char c) noexcept -> int {
  * @param value Reference to an integer where the parsed value will be stored.
  * @return from_chars_result The result of the parsing operation.
  */
+ template <typename T = int32_t>
 MGUTILITY_CNSTXPR auto from_chars(const char *first, const char *last,
-                                  int &value) noexcept -> from_chars_result {
-  int result = 0;
+                                  T &value) noexcept -> from_chars_result {
+  T result = 0;
   bool negative = false;
   const char *it = first;
 

@@ -55,20 +55,18 @@ struct tm : std::tm {
  * @return int32_t The parsed integer.
  * @throws std::invalid_argument if the value is not convertible.
  */
-auto parse_integer(mgutility::string_view str, uint32_t len, uint32_t &next,
-                   uint32_t begin_offset = 0) -> int32_t {
-  int32_t result{0};
+template <typename T = int32_t>
+MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
+                                     uint32_t len, uint32_t &next,
+                                     uint32_t begin_offset = 0) -> std::errc {
+  result = 0;
 
   auto error = mgutility::from_chars(str.data() + next + begin_offset,
                                      str.data() + len + next, result);
 
   next = ++len + next;
 
-  if (error.ec != std::errc()) {
-    throw std::invalid_argument("value is not convertible!");
-  }
-
-  return result;
+  return error.ec;
 }
 
 /**
@@ -80,10 +78,11 @@ auto parse_integer(mgutility::string_view str, uint32_t len, uint32_t &next,
  * @throws std::out_of_range if the value is out of range.
  */
 MGUTILITY_CNSTXPR auto check_range(int32_t value, int32_t min, int32_t max)
-    -> void {
+    -> std::errc {
   if (value < min || value > max) {
-    throw std::out_of_range("value is out of range!");
+    return std::errc::result_out_of_range;
   }
+  return std::errc{};
 }
 
 /**
@@ -103,19 +102,19 @@ auto MGUTILITY_CNSTXPR is_leap_year(uint32_t year) -> bool {
  * @return std::time_t The corresponding time_t value.
  * @throws std::out_of_range if any tm value is out of valid range.
  */
-MGUTILITY_CNSTXPR auto mktime(std::tm &tm) -> std::time_t {
+MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &tm) -> std::errc {
   MGUTILITY_CNSTXPR std::array<std::array<uint32_t, 12>, 2> num_of_days{
       {{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30,
         31}, // 365 days in a common year
        {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30,
         31}}}; // 366 days in a leap year
 
-  std::time_t result{0};
+  result = 0;
 
   // Check for out of range values in tm structure
   if (tm.tm_mon > 12 || tm.tm_mon < 0 || tm.tm_mday > 31 || tm.tm_min > 60 ||
       tm.tm_sec > 60 || tm.tm_hour > 24) {
-    throw std::out_of_range("value is out of range!");
+    return std::errc::result_out_of_range;
   }
 
   tm.tm_year += 1900;
@@ -138,7 +137,7 @@ MGUTILITY_CNSTXPR auto mktime(std::tm &tm) -> std::time_t {
   result *= 60;
   result += tm.tm_sec;
 
-  return result;
+  return std::errc{};
 }
 
 /**
@@ -201,6 +200,56 @@ MGUTILITY_CNSTXPR auto handle_timezone(tm &tm, int32_t offset) -> void {
   }
 }
 
+// Free parsing functions
+MGUTILITY_CNSTXPR auto parse_year(detail::tm &result, string_view date_str,
+                                  uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_year, date_str, 4, next);
+  result.tm_year %= 1900;
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_month(detail::tm &result, string_view date_str,
+                                   uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_mon, date_str, 2, next);
+  result.tm_mon -= 1;
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_day(detail::tm &result, string_view date_str,
+                                 uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_mday, date_str, 2, next);
+  error = check_range(result.tm_mday, 1, 31);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_hour(detail::tm &result, string_view date_str,
+                                  uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_hour, date_str, 2, next);
+  error = check_range(result.tm_hour, 0, 23);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_minute(detail::tm &result, string_view date_str,
+                                    uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_min, date_str, 2, next);
+  error = check_range(result.tm_min, 0, 59);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_second(detail::tm &result, string_view date_str,
+                                    uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_sec, date_str, 2, next);
+  error = check_range(result.tm_sec, 0, 59);
+  return error;
+}
+
+MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
+                                      uint32_t &next) -> std::errc {
+  auto error = parse_integer(result.tm_ms, date_str, 3, next);
+  error = check_range(result.tm_ms, 0, 999);
+  return error;
+}
+
 /**
  * @brief Parses a date and time string according to a specified format.
  *
@@ -210,8 +259,8 @@ MGUTILITY_CNSTXPR auto handle_timezone(tm &tm, int32_t offset) -> void {
  * @throws std::invalid_argument if the format string is invalid or parsing
  * fails.
  */
-MGUTILITY_CNSTXPR auto get_time(string_view format, string_view date_str)
-    -> detail::tm {
+MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
+                                string_view date_str) -> std::errc {
   int32_t count{0};
   uint32_t begin{0}, end{0};
 
@@ -234,59 +283,88 @@ MGUTILITY_CNSTXPR auto get_time(string_view format, string_view date_str)
   }
 
   if (format[begin + 1] != ':' || (end - begin < 3 || count != 0))
-    throw std::invalid_argument("invalid format string!");
+    return std::errc::invalid_argument;
 
-  detail::tm tm{};
   uint32_t next{0};
+  std::errc error{};
 
   // Parse the date and time string based on the format specifiers
   for (auto i{begin}; i < end; ++i) {
     switch (format[i]) {
     case '%': {
-      if (i + 1 >= format.size())
-        throw std::invalid_argument("invalid format string!");
+      if (i + 1 >= format.size()) {
+        return std::errc::invalid_argument;
+      }
       switch (format[i + 1]) {
       case 'Y': // Year with century (4 digits)
-        tm.tm_year = parse_integer(date_str, 4, next) % 1900;
+        error = parse_year(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'm': // Month (01-12)
-        tm.tm_mon = parse_integer(date_str, 2, next) - 1;
-        check_range(tm.tm_mon, 0, 11);
+        error = parse_month(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'd': // Day of the month (01-31)
-        tm.tm_mday = parse_integer(date_str, 2, next);
-        check_range(tm.tm_mday, 1, 31);
+        error = parse_day(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'F': { // Full date (YYYY-MM-DD)
-        tm.tm_year = parse_integer(date_str, 4, next) % 1900;
-        tm.tm_mon = parse_integer(date_str, 2, next) - 1;
-        tm.tm_mday = parse_integer(date_str, 2, next);
-        check_range(tm.tm_mon, 0, 11);
-        check_range(tm.tm_mday, 1, 31);
+        error = parse_year(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
+        error = parse_month(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
+        error = parse_day(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
       } break;
       case 'H': // Hour (00-23)
-        tm.tm_hour = parse_integer(date_str, 2, next);
-        check_range(tm.tm_hour, 0, 23);
+        error = parse_hour(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'M': // Minute (00-59)
-        tm.tm_min = parse_integer(date_str, 2, next);
-        check_range(tm.tm_min, 0, 59);
+        error = parse_minute(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'S': // Second (00-59)
-        tm.tm_sec = parse_integer(date_str, 2, next);
-        check_range(tm.tm_sec, 0, 59);
+        error = parse_second(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'T': { // Full time (HH:MM:SS)
-        tm.tm_hour = parse_integer(date_str, 2, next);
-        tm.tm_min = parse_integer(date_str, 2, next);
-        tm.tm_sec = parse_integer(date_str, 2, next);
-        check_range(tm.tm_hour, 0, 23);
-        check_range(tm.tm_min, 0, 59);
-        check_range(tm.tm_sec, 0, 59);
+        error = parse_hour(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
+        error = parse_minute(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
+        error = parse_second(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
       } break;
       case 'f': // Milliseconds (000-999)
-        tm.tm_ms = parse_integer(date_str, 3, next);
-        check_range(tm.tm_ms, 0, 999);
+        error = parse_fraction(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
+        }
         break;
       case 'z': { // Timezone offset (+/-HHMM)
         if (*(date_str.begin() + next - 1) != 'Z') {
@@ -305,28 +383,43 @@ MGUTILITY_CNSTXPR auto get_time(string_view format, string_view date_str)
           auto offset{0};
           if (pos < 3 && pos > 0) {
             next = 0;
-            auto hour_offset = parse_integer(hour_offset_str, 2, next);
-            auto min_offset = parse_integer(hour_offset_str, 2, next);
+            int32_t hour_offset{0};
+            int32_t min_offset{0};
+            error = parse_integer(hour_offset, hour_offset_str, 2, next);
+            if (error != std::errc{}) {
+              return error;
+            }
+            error = parse_integer(min_offset, hour_offset_str, 2, next);
+            if (error != std::errc{}) {
+              return error;
+            }
             offset = hour_offset * 100 + min_offset;
           } else {
-            if (date_str.size() - next > 4 + diff)
-              throw std::invalid_argument("value is not convertible!");
-            offset =
-                parse_integer(date_str, date_str.size() - next, next, diff);
+            if (date_str.size() - next > 4 + diff) {
+              return std::errc::invalid_argument;
+            }
+            error = parse_integer(offset, date_str, date_str.size() - next,
+                                  next, diff);
+            if (error != std::errc{}) {
+              return error;
+            }
           }
-          check_range(offset, 0, 1200);
+          error = check_range(offset, 0, 1200);
+          if (error != std::errc{}) {
+            return error;
+          }
           switch (sign) {
           case '+':
-            handle_timezone(tm, offset * -1);
+            handle_timezone(result, offset * -1);
             break;
           case '-':
-            handle_timezone(tm, offset);
+            handle_timezone(result, offset);
             break;
           }
         }
       } break;
       default:
-        throw std::invalid_argument("unsupported format specifier!");
+        return std::errc::invalid_argument;
       }
     } break;
     case ' ': // Space separator
@@ -334,33 +427,65 @@ MGUTILITY_CNSTXPR auto get_time(string_view format, string_view date_str)
     case '/': // Slash separator
     case '.': // Dot separator
     case ':': // Colon separator
-      if (i > 1 && format[i] != date_str[next - 1])
-        throw std::invalid_argument("value is not convertible!");
+      if (i > 1 && format[i] != date_str[next - 1]) {
+        return std::errc::invalid_argument;
+      }
       break;
     }
   }
 
-  return tm;
+  return std::errc{};
 }
 
 } // namespace detail
 
 /**
- * @brief Parses a date and time string into a
- * std::chrono::system_clock::time_point.
+ * @brief Parses a date and time string into a std::chrono::time_point of the
+ * specified clock type.
  *
+ * @tparam Clock The clock type (defaults to std::chrono::system_clock).
+ * @param time_point The time point to populate.
  * @param format The format string.
  * @param date_str The date and time string to parse.
- * @return std::chrono::system_clock::time_point The parsed time point.
+ * @return std::error_code An error code indicating success or failure.
  */
-auto parse(string_view format, string_view date_str)
-    -> std::chrono::system_clock::time_point {
-  auto tm = detail::get_time(format, date_str);
-  auto time_t = detail::mktime(tm);
-  std::chrono::system_clock::time_point clock =
-      std::chrono::system_clock::from_time_t(time_t);
-  clock += std::chrono::milliseconds(tm.tm_ms);
-  return clock;
+template <typename Clock = std::chrono::system_clock>
+auto parse(typename Clock::time_point &time_point, string_view format,
+           string_view date_str) -> std::error_code {
+  detail::tm tm{};
+  auto error = detail::get_time(tm, format, date_str);
+  if (error != std::errc{}) {
+    return std::make_error_code(error);
+  }
+  std::time_t time_t{};
+  error = detail::mktime(time_t, tm);
+  if (error != std::errc{}) {
+    return std::make_error_code(error);
+  }
+  time_point = Clock::from_time_t(time_t);
+  time_point += std::chrono::milliseconds(tm.tm_ms);
+  return std::error_code{};
+}
+
+/**
+ * @brief Parses a date and time string into a std::chrono::time_point of the
+ * specified clock type.
+ *
+ * @tparam Clock The clock type (defaults to std::chrono::system_clock).
+ * @param format The format string.
+ * @param date_str The date and time string to parse.
+ * @throw std::system_error if parsing fails
+ * @return Clock::time_point The parsed time point.
+ */
+template <typename Clock = std::chrono::system_clock>
+auto parse(string_view format, string_view date_str) ->
+    typename Clock::time_point {
+  typename Clock::time_point time_point{};
+  auto error = parse<Clock>(time_point, format, date_str);
+  if (error) {
+    throw std::system_error(error);
+  }
+  return time_point;
 }
 
 } // namespace chrono
