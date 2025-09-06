@@ -22,4 +22,4 @@ jobs:
         uses: trunk-io/trunk-action@v1
         with:
           check-mode: all
-          post-annotations: ${{ github.event_name == 'pull_request' }}
+          post-annotations: false
