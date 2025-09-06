@@ -42,6 +42,7 @@ lint:
         - .github/**
         - .trunk/**
         - .git/**
+        - README.md
 
 actions:
   disabled:
