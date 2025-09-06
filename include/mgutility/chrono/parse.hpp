@@ -36,9 +36,11 @@
 #include <stdexcept>
 #include <type_traits>
 
+//NOLINTBEGIN(modernize-concat-nested-namespaces)
 namespace mgutility {
 namespace chrono {
 namespace detail {
+//NOLINTEND(modernize-concat-nested-namespaces)
 
 /**
  * @brief Extended tm structure with milliseconds.
@@ -148,56 +150,52 @@ MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &tm) -> std::errc {
  * @param tm The tm structure to adjust.
  * @param offset The timezone offset in hours and minutes.
  */
-MGUTILITY_CNSTXPR auto handle_timezone(tm &tm, int32_t offset) -> void {
+MGUTILITY_CNSTXPR auto handle_timezone(tm &timeStruct, int32_t offset) -> void {
   const auto minute = offset % 100;
   const auto hour = offset / 100;
 
   if (offset < 0) {
-    // Adjust minutes
-    if (tm.tm_min + minute < 0) {
-      tm.tm_min += 60 - minute;
-      tm.tm_hour -= 1;
-      if (tm.tm_hour < 0) {
-        tm.tm_hour += 24;
-        tm.tm_mday -= 1;
+    if (timeStruct.tm_min + minute < 0) {
+      timeStruct.tm_min += 60 - minute;
+      timeStruct.tm_hour -= 1;
+      if (timeStruct.tm_hour < 0) {
+        timeStruct.tm_hour += 24;
+        timeStruct.tm_mday -= 1;
       }
     } else {
-      tm.tm_min += minute;
+      timeStruct.tm_min += minute;
     }
 
-    // Adjust hours
-    if (tm.tm_hour + hour < 0) {
-      tm.tm_hour += 24 + hour;
-      tm.tm_mday -= 1;
+    if (timeStruct.tm_hour + hour < 0) {
+      timeStruct.tm_hour += 24 + hour;
+      timeStruct.tm_mday -= 1;
     } else {
-      tm.tm_hour += hour;
+      timeStruct.tm_hour += hour;
     }
   } else {
-    // Adjust minutes
-    if (tm.tm_min + minute >= 60) {
-      tm.tm_min -= 60 - minute;
-      tm.tm_hour += 1;
-      if (tm.tm_hour >= 24) {
-        tm.tm_hour -= 24;
-        tm.tm_mday += 1;
+    if (timeStruct.tm_min + minute >= 60) {
+      timeStruct.tm_min -= 60 - minute;
+      timeStruct.tm_hour += 1;
+      if (timeStruct.tm_hour >= 24) {
+        timeStruct.tm_hour -= 24;
+        timeStruct.tm_mday += 1;
       }
     } else {
-      tm.tm_min += minute;
+      timeStruct.tm_min += minute;
     }
 
-    // Adjust hours
-    if (tm.tm_hour + hour >= 24) {
-      tm.tm_hour += hour - 24;
-      tm.tm_mday += 1;
-      if (tm.tm_mon == 11 && tm.tm_mday > 31) { // Handle December overflow
-        tm.tm_mday = 1;
-        tm.tm_mon = 0;
-      } else if (tm.tm_mday > 30) { // Handle month overflow for other months
-        tm.tm_mday = 1;
-        tm.tm_mon += 1;
+    if (timeStruct.tm_hour + hour >= 24) {
+      timeStruct.tm_hour += hour - 24;
+      timeStruct.tm_mday += 1;
+      if (timeStruct.tm_mon == 11 && timeStruct.tm_mday > 31) {
+        timeStruct.tm_mday = 1;
+        timeStruct.tm_mon = 0;
+      } else if (timeStruct.tm_mday > 30) {
+        timeStruct.tm_mday = 1;
+        timeStruct.tm_mon += 1;
       }
     } else {
-      tm.tm_hour += hour;
+      timeStruct.tm_hour += hour;
     }
   }
 }
@@ -264,27 +262,25 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result, string_view dat
     return std::errc::invalid_argument;
   }
 
-  char sign = date_str[next++];
-  int32_t hour = 0, minute = 0;
+  const char sign = date_str[next++];
+  int32_t hour = 0;
+  int32_t minute = 0;
 
-  // Parse hour part (2 digits)
   error = parse_integer(hour, date_str, 2, next);
   if (error != std::errc{}) {
     return error;
   }
 
-  // Optional colon
   if (next < date_str.size() && date_str[next] == ':') {
     ++next;
   }
 
-  // Parse minute part (2 digits)
   error = parse_integer(minute, date_str, 2, next);
   if (error != std::errc{}) {
     return error;
   }
 
-  int32_t offset = hour * 100 + minute;
+  const int32_t offset = hour * 100 + minute;
   error = check_range(offset, 0, 1200);
   if (error != std::errc{}) {
     return error;
@@ -305,61 +301,58 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result, string_view dat
  */
 MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
                                 string_view date_str) -> std::errc {
-  int32_t count{0};
-  std::size_t begin{0}, end{0};
-
-  // Find the positions of format specifiers
-  begin = format.find('{');
-  end = format.find('}');
-  if (begin == string_view::npos || end == string_view::npos || begin >= end)
+  const std::size_t begin = format.find('{');
+  const std::size_t end = format.find('}');
+  if (begin == string_view::npos || end == string_view::npos || begin >= end) {
     return std::errc::invalid_argument;
+  }
 
-  if (format[begin + 1] != ':' || (end - begin < 3 || count != 0))
+  if (format[begin + 1] != ':' || (end - begin < 3)) {
     return std::errc::invalid_argument;
+  }
 
-  uint32_t next{0};
+  uint32_t next = 0;
   std::errc error{};
 
-  // Parse the date and time string based on the format specifiers
-  for (auto i{begin}; i < end; ++i) {
+  for (std::size_t i = begin; i < end; ++i) {
     switch (format[i]) {
     case '%': {
       if (i + 1 >= format.size()) {
         return std::errc::invalid_argument;
       }
       switch (format[i + 1]) {
-      case 'Y': // Year with century (4 digits)
+      case 'Y':
         error = parse_year(result, date_str, next);
         break;
-      case 'm': // Month (01-12)
+      case 'm':
         error = parse_month(result, date_str, next);
         break;
-      case 'd': // Day of the month (01-31)
+      case 'd':
         error = parse_day(result, date_str, next);
         break;
-      case 'F': { // Full date (YYYY-MM-DD)
+      case 'F': {
         error = parse_year(result, date_str, next);
         error = parse_month(result, date_str, next);
         error = parse_day(result, date_str, next);
       } break;
-      case 'H': // Hour (00-23)
+      case 'H':
         error = parse_hour(result, date_str, next);
         break;
-      case 'M': // Minute (00-59)
+      case 'M':
         error = parse_minute(result, date_str, next);
         break;
-      case 'S': // Second (00-59)
+      case 'S':
         error = parse_second(result, date_str, next);
         break;
-      case 'T': { // Full time (HH:MM:SS)
+      case 'T': {
         error = parse_hour(result, date_str, next);
         error = parse_minute(result, date_str, next);
         error = parse_second(result, date_str, next);
       } break;
-      case 'f': // Milliseconds (000-999)
+      case 'f':
         error = parse_fraction(result, date_str, next);
         break;
-      case 'z': { // Timezone offset (+/-HHMM)
+      case 'z': {
         error = parse_timezone_offset(result, date_str, next);
       } break;
       default:
