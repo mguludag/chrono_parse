@@ -361,10 +361,8 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
         }
       } break;
       case 'f': // Milliseconds (000-999)
-        error = parse_fraction(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
+        tm.tm_ms = parse_integer(date_str, 3, next);
+        check_range(tm.tm_ms, 0, 999);
         break;
       case 'z': { // Timezone offset (+/-HHMM)
         if (*(date_str.begin() + next - 1) != 'Z') {
@@ -395,19 +393,12 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
             }
             offset = hour_offset * 100 + min_offset;
           } else {
-            if (date_str.size() - next > 4 + diff) {
-              return std::errc::invalid_argument;
-            }
-            error = parse_integer(offset, date_str, date_str.size() - next,
-                                  next, diff);
-            if (error != std::errc{}) {
-              return error;
-            }
+            if (date_str.size() - next > 4 + diff)
+              throw std::invalid_argument("value is not convertible!");
+            offset =
+                parse_integer(date_str, date_str.size() - next, next, diff);
           }
-          error = check_range(offset, 0, 1200);
-          if (error != std::errc{}) {
-            return error;
-          }
+          check_range(offset, 0, 1200);
           switch (sign) {
           case '+':
             handle_timezone(result, offset * -1);
