@@ -250,6 +250,48 @@ MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
   return error;
 }
 
+MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result, string_view date_str,
+                       uint32_t &next) -> std::errc {
+  std::errc error{};
+  if (--next < date_str.size() && date_str[next] == 'Z') {
+    handle_timezone(result, 0);
+    return error;
+  }
+
+  if (next >= date_str.size() || (date_str[next] != '+' && date_str[next] != '-')) {
+    return std::errc::invalid_argument;
+  }
+
+  char sign = date_str[next++];
+  int32_t hour = 0, minute = 0;
+
+  // Parse hour part (2 digits)
+  error = parse_integer(hour, date_str, 2, next);
+  if (error != std::errc{}) {
+    return error;
+  }
+
+  // Optional colon
+  if (next < date_str.size() && date_str[next] == ':') {
+    ++next;
+  }
+
+  // Parse minute part (2 digits)
+  error = parse_integer(minute, date_str, 2, next);
+  if (error != std::errc{}) {
+    return error;
+  }
+
+  int32_t offset = hour * 100 + minute;
+  error = check_range(offset, 0, 1200);
+  if (error != std::errc{}) {
+    return error;
+  }
+
+  handle_timezone(result, sign == '+' ? -offset : offset);
+  return error;
+}
+
 /**
  * @brief Parses a date and time string according to a specified format.
  *
@@ -367,55 +409,9 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
         }
         break;
       case 'z': { // Timezone offset (+/-HHMM)
-        if (*(date_str.begin() + next - 1) != 'Z') {
-          char sign{};
-          auto diff{0};
-          for (auto j{next - 1}; j < date_str.size(); ++j) {
-            if (date_str[j] == '-' || date_str[j] == '+') {
-              sign = date_str[j];
-              diff = j - next + 1;
-              break;
-            }
-          }
-          auto hour_offset_str =
-              string_view{date_str.data() + next + diff, date_str.size() - 1};
-          auto pos = hour_offset_str.find(':');
-          auto offset{0};
-          if (pos < 3 && pos > 0) {
-            next = 0;
-            int32_t hour_offset{0};
-            int32_t min_offset{0};
-            error = parse_integer(hour_offset, hour_offset_str, 2, next);
-            if (error != std::errc{}) {
-              return error;
-            }
-            error = parse_integer(min_offset, hour_offset_str, 2, next);
-            if (error != std::errc{}) {
-              return error;
-            }
-            offset = hour_offset * 100 + min_offset;
-          } else {
-            if (date_str.size() - next > 4 + diff) {
-              return std::errc::invalid_argument;
-            }
-            error = parse_integer(offset, date_str, date_str.size() - next,
-                                  next, diff);
-            if (has_error()) {
-              return error;
-            }
-          }
-          error = check_range(offset, 0, 1200);
-          if (has_error()) {
-            return error;
-          }
-          switch (sign) {
-          case '+':
-            handle_timezone(result, offset * -1);
-            break;
-          case '-':
-            handle_timezone(result, offset);
-            break;
-          }
+        error = parse_timezone_offset(result, date_str, next);
+        if (error != std::errc{}) {
+          return error;
         }
       } break;
       default:

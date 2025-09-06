@@ -26,13 +26,13 @@ SOFTWARE.
 #include "mgutility/_common/definitions.hpp"
 #include <system_error>
 
-#if MGUTILITY_CPLUSPLUS >= 201703L
+#if MGUTILITY_CPLUSPLUS >= 201703L && !defined(CLANG_NO_CHARCONV)
 #include <charconv>
 #endif
 
 namespace mgutility {
 
-#if MGUTILITY_CPLUSPLUS < 201703L
+#if MGUTILITY_CPLUSPLUS < 201703L || defined(CLANG_NO_CHARCONV)
 
 /**
  * @brief Result structure for from_chars function.
