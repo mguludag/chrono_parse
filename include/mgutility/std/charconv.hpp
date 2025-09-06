@@ -23,6 +23,9 @@ SOFTWARE.
 */
 #ifndef MGUTILITY_STD_CHARCONV_HPP
 #define MGUTILITY_STD_CHARCONV_HPP
+
+// trunk-ignore-all(clang-format)
+
 #include "mgutility/_common/definitions.hpp"
 #include <system_error>
 

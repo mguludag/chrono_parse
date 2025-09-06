@@ -3,6 +3,8 @@
 #include "mgutility/chrono/parse.hpp"
 #include <chrono>
 
+// trunk-ignore-all(clang-format)
+
 template <typename T>
 auto to_milliseconds(T time_point) -> std::chrono::milliseconds {
   return std::chrono::duration_cast<std::chrono::milliseconds>(time_point.time_since_epoch());
