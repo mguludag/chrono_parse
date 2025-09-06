@@ -304,25 +304,13 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result, string_view dat
 MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
                                 string_view date_str) -> std::errc {
   int32_t count{0};
-  uint32_t begin{0}, end{0};
+  std::size_t begin{0}, end{0};
 
   // Find the positions of format specifiers
-  for (auto i{0}; i < format.size(); ++i) {
-    switch (format[i]) {
-    case '{':
-      begin = i;
-      ++count;
-      break;
-    case '}':
-      end = i;
-      --count;
-      break;
-    }
-    if (begin < end)
-      break;
-    else if (count != 0 && end < begin)
-      break;
-  }
+  begin = format.find('{');
+  end = format.find('}');
+  if (begin == string_view::npos || end == string_view::npos || begin >= end)
+    return std::errc::invalid_argument;
 
   if (format[begin + 1] != ':' || (end - begin < 3 || count != 0))
     return std::errc::invalid_argument;
@@ -340,82 +328,43 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
       switch (format[i + 1]) {
       case 'Y': // Year with century (4 digits)
         error = parse_year(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'm': // Month (01-12)
         error = parse_month(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'd': // Day of the month (01-31)
         error = parse_day(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'F': { // Full date (YYYY-MM-DD)
         error = parse_year(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         error = parse_month(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         error = parse_day(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
       } break;
       case 'H': // Hour (00-23)
         error = parse_hour(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'M': // Minute (00-59)
         error = parse_minute(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'S': // Second (00-59)
         error = parse_second(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'T': { // Full time (HH:MM:SS)
         error = parse_hour(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         error = parse_minute(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         error = parse_second(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
       } break;
       case 'f': // Milliseconds (000-999)
         error = parse_fraction(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
         break;
       case 'z': { // Timezone offset (+/-HHMM)
         error = parse_timezone_offset(result, date_str, next);
-        if (error != std::errc{}) {
-          return error;
-        }
       } break;
       default:
         return std::errc::invalid_argument;
+      }
+      if (error != std::errc{}) {
+        return error;
       }
     } break;
     case ' ': // Space separator
