@@ -16,8 +16,12 @@ add_library(mgutility::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 # Specify the include directories for the library
 target_include_directories(
-  chrono_parse INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                         $<INSTALL_INTERFACE:include>)
+  chrono_parse INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mgutility/include>
+    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:mgutility/include>
+)
 
 # Set the C++ standard
 target_compile_features(chrono_parse INTERFACE cxx_std_11)
