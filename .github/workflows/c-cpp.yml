@@ -51,6 +51,8 @@ jobs:
     steps:
       - uses: actions/checkout@main
       - name: Setup
+        with:
+          submodules: true
         run: |
           apt-get update && apt-get install -y curl git pkg-config libsystemd-dev
           CMAKE_VERSION="3.24.2"
