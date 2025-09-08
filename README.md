@@ -2,6 +2,24 @@
 
 parse date and times with {fmt} style into`std::chrono::time_point` {WIP}
 
+## Fetch library with CMake
+
+```CMake
+include(FetchContent)
+
+FetchContent_Declare(
+  chrono_parse
+  GIT_REPOSITORY https://github.com/mguludag/chrono_parse.git
+  GIT_TAG main # or the specific tag or branch you want to use
+)
+
+FetchContent_MakeAvailable(chrono_parse)
+
+#...
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE mgutility::chrono_parse)
+```
+
 ## [Usage](https://godbolt.org/z/cTK4977vP)
 
 ```C++
