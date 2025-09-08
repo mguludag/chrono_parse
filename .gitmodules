@@ -1,0 +1,3 @@
+[submodule "mgutility"]
+	path = mgutility
+	url = https://github.com/mguludag/mgutility.git
