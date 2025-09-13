@@ -30,17 +30,18 @@
 #include "mgutility/std/charconv.hpp"
 #include "mgutility/std/string_view.hpp"
 
-#include <array>
 #include <cctype>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <type_traits>
 
-//NOLINTBEGIN(modernize-concat-nested-namespaces)
+// NOLINTBEGIN(modernize-concat-nested-namespaces)
 namespace mgutility {
 namespace chrono {
 namespace detail {
-//NOLINTEND(modernize-concat-nested-namespaces)
+// NOLINTEND(modernize-concat-nested-namespaces)
 
 /**
  * @brief Extended tm structure with milliseconds.
@@ -72,6 +73,16 @@ MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
 }
 
 /**
+ * @brief Returns the absolute value of an integer.
+ * 
+ * @param value 
+ * @return constexpr int32_t 
+ */
+constexpr int32_t abs(int32_t value) noexcept {
+    return value >= 0 ? value : -value;
+}
+
+/**
  * @brief Checks if a value is within a given range.
  *
  * @param value The value to check.
@@ -79,8 +90,9 @@ MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
  * @param max The maximum acceptable value.
  * @throws std::out_of_range if the value is out of range.
  */
- template <typename T>
-MGUTILITY_CNSTXPR auto check_range(const T& value, const T& min, const T& max) -> std::errc {
+template <typename T>
+MGUTILITY_CNSTXPR auto check_range(const T &value, const T &min, const T &max)
+    -> std::errc {
   if (value < min || value > max) {
     return std::errc::result_out_of_range;
   }
@@ -98,28 +110,51 @@ auto MGUTILITY_CNSTXPR is_leap_year(int32_t year) -> bool {
 }
 
 /**
+ * @brief Returns the number of days in a given month of a given year.
+ *
+ * @param year
+ * @param month
+ * @return int32_t
+ */
+// NOLINTNEXTLINE
+auto MGUTILITY_CNSTXPR days_in_month(int32_t year, int32_t month) -> int32_t {
+  // NOLINTNEXTLINE
+  constexpr int days_per_month[] = {31, 28, 31, 30, 31, 30,
+                                    31, 31, 30, 31, 30, 31};
+  if (month < 0 || month > 11) {
+    return 0; // Invalid month
+  }
+  if (month == 1) { // February
+    return is_leap_year(year) ? 29 : 28;
+  }
+  // NOLINTNEXTLINE
+  return days_per_month[month];
+}
+
+/**
  * @brief Converts a tm structure to a time_t value.
  *
  * @param tm The tm structure to convert.
  * @return std::time_t The corresponding time_t value.
  * @throws std::out_of_range if any tm value is out of valid range.
  */
-MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct) -> std::errc {
-  MGUTILITY_CNSTXPR std::array<std::array<uint32_t, 12>, 2> num_of_days{
-      {{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30,
-        31}, // 365 days in a common year
-       {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30,
-        31}}}; // 366 days in a leap year
-
+MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct)
+    -> std::errc {
   result = 0;
 
   // Check for out of range values in tm structure
-  if (time_struct.tm_mon > 12 || time_struct.tm_mon < 0 || time_struct.tm_mday > 31 || time_struct.tm_min > 60 ||
+  if (time_struct.tm_mon > 12 || time_struct.tm_mon < 0 ||
+      time_struct.tm_mday > 31 || time_struct.tm_min > 60 ||
       time_struct.tm_sec > 60 || time_struct.tm_hour > 24) {
     return std::errc::result_out_of_range;
   }
 
   time_struct.tm_year += 1900;
+
+  if (days_in_month(time_struct.tm_year, time_struct.tm_mon) <
+      time_struct.tm_mday) {
+    return std::errc::result_out_of_range;
+  }
 
   // Calculate the number of days since 1970
   for (auto i{1970}; i < time_struct.tm_year; ++i) {
@@ -128,8 +163,8 @@ MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct) -> std:
 
   // Add the days for the current year
   for (auto i{0}; i < time_struct.tm_mon; ++i) {
-    //NOLINTNEXTLINE
-    result += num_of_days[is_leap_year(time_struct.tm_year)][static_cast<std::size_t>(i)];
+    // NOLINTNEXTLINE
+    result += days_in_month(time_struct.tm_year, i);
   }
 
   result += time_struct.tm_mday - 1; // nth day since 1970
@@ -149,54 +184,82 @@ MGUTILITY_CNSTXPR auto mktime(std::time_t &result, std::tm &time_struct) -> std:
  * @param tm The tm structure to adjust.
  * @param offset The timezone offset in hours and minutes.
  */
-MGUTILITY_CNSTXPR auto handle_timezone(tm &time_struct, int32_t offset) -> void {
-  const auto minute = offset % 100;
-  const auto hour = offset / 100;
+MGUTILITY_CNSTXPR auto handle_timezone(tm &time_struct, int32_t offset)
+    -> std::errc {
+  // Validate offset: HHMM format, minutes 0-59, hours 0-23
+  const int32_t abs_offset = abs(offset);
+  const int32_t minutes = abs_offset % 100;
+  const int32_t hours = abs_offset / 100;
+  if (minutes > 59 || hours > 23) {
+    return std::errc::invalid_argument;
+  }
 
-  if (offset < 0) {
-    if (time_struct.tm_min + minute < 0) {
-      time_struct.tm_min += 60 - minute;
-      time_struct.tm_hour -= 1;
-      if (time_struct.tm_hour < 0) {
-        time_struct.tm_hour += 24;
-        time_struct.tm_mday -= 1;
-      }
-    } else {
-      time_struct.tm_min += minute;
-    }
+  // Validate input tm structure (basic checks)
+  if (time_struct.tm_mon < 0 || time_struct.tm_mon > 11 ||
+      time_struct.tm_mday < 1 || time_struct.tm_year < 0) {
+    return std::errc::invalid_argument;
+  }
 
-    if (time_struct.tm_hour + hour < 0) {
-      time_struct.tm_hour += 24 + hour;
-      time_struct.tm_mday -= 1;
-    } else {
-      time_struct.tm_hour += hour;
-    }
-  } else {
-    if (time_struct.tm_min + minute >= 60) {
-      time_struct.tm_min -= 60 - minute;
-      time_struct.tm_hour += 1;
-      if (time_struct.tm_hour >= 24) {
-        time_struct.tm_hour -= 24;
-        time_struct.tm_mday += 1;
-      }
-    } else {
-      time_struct.tm_min += minute;
-    }
+  // Apply offset (positive or negative)
+  const int32_t total_minutes =
+      time_struct.tm_min + (offset >= 0 ? minutes : -minutes);
+  const int32_t total_hours =
+      time_struct.tm_hour + (offset >= 0 ? hours : -hours);
 
-    if (time_struct.tm_hour + hour >= 24) {
-      time_struct.tm_hour += hour - 24;
-      time_struct.tm_mday += 1;
-      if (time_struct.tm_mon == 11 && time_struct.tm_mday > 31) {
-        time_struct.tm_mday = 1;
-        time_struct.tm_mon = 0;
-      } else if (time_struct.tm_mday > 30) {
-        time_struct.tm_mday = 1;
-        time_struct.tm_mon += 1;
+  // Normalize minutes (-59 to 119 -> 0-59 with hour carry)
+  time_struct.tm_min = total_minutes % 60;
+  int minute_carry = total_minutes / 60;
+  if (total_minutes < 0 && total_minutes % 60 != 0) {
+    minute_carry -= 1;
+    time_struct.tm_min += 60;
+  }
+
+  // Normalize hours (-23 to 47 -> 0-23 with day carry)
+  time_struct.tm_hour = (total_hours + minute_carry) % 24;
+  int day_carry = (total_hours + minute_carry) / 24;
+  if (total_hours + minute_carry < 0 &&
+      (total_hours + minute_carry) % 24 != 0) {
+    day_carry -= 1;
+    time_struct.tm_hour += 24;
+  }
+
+  // Normalize days, months, and years
+  int days = time_struct.tm_mday + day_carry;
+  int months = time_struct.tm_mon;
+  int years = time_struct.tm_year;
+
+  // Handle negative days
+  while (days <= 0) {
+    months -= 1;
+    if (months < 0) {
+      months += 12;
+      years -= 1;
+      if (years < 0) {
+        return std::errc::result_out_of_range; // Year underflow
       }
-    } else {
-      time_struct.tm_hour += hour;
+    }
+    days += days_in_month(years, months);
+  }
+
+  // Handle day overflow
+  while (days > days_in_month(years, months)) {
+    days -= days_in_month(years, months);
+    months += 1;
+    if (months > 11) {
+      months -= 12;
+      years += 1;
+      if (years > 9999 - 1900) { // Avoid overflow (arbitrary limit)
+        return std::errc::result_out_of_range;
+      }
     }
   }
+
+  // Update tm structure
+  time_struct.tm_mday = days;
+  time_struct.tm_mon = months;
+  time_struct.tm_year = years;
+
+  return std::errc{};
 }
 
 // Free parsing functions
@@ -220,7 +283,8 @@ MGUTILITY_CNSTXPR auto parse_day(detail::tm &result, string_view date_str,
   if (error != std::errc{}) {
     return error;
   }
-  error = check_range(result.tm_mday, 1, 31);
+  error = check_range(result.tm_mday, 1,
+                      days_in_month(result.tm_year, result.tm_mon));
   return error;
 }
 
@@ -264,15 +328,18 @@ MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
   return error;
 }
 
-MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result, string_view date_str,
-                       uint32_t &next) -> std::errc {
+MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result,
+                                             string_view date_str,
+                                             uint32_t &next) -> std::errc {
   std::errc error{};
+  // NOLINTNEXTLINE [bugprone-inc-dec-in-conditions]
   if (--next < date_str.size() && date_str[next] == 'Z') {
-    handle_timezone(result, 0);
+    error = handle_timezone(result, 0);
     return error;
   }
 
-  if (next >= date_str.size() || (date_str[next] != '+' && date_str[next] != '-')) {
+  if (next >= date_str.size() ||
+      (date_str[next] != '+' && date_str[next] != '-')) {
     return std::errc::invalid_argument;
   }
 
@@ -294,13 +361,13 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result, string_view dat
     return error;
   }
 
-  const int32_t offset = hour * 100 + minute;
+  const int32_t offset = (hour * 100) + minute;
   error = check_range(offset, 0, 1200);
   if (error != std::errc{}) {
     return error;
   }
 
-  handle_timezone(result, sign == '+' ? -offset : offset);
+  error = handle_timezone(result, sign == '+' ? -offset : offset);
   return error;
 }
 
@@ -345,11 +412,11 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
         error = parse_day(result, date_str, next);
         break;
       case 'F': {
-        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_year(result, date_str, next);
-        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_month(result, date_str, next);
-        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_day(result, date_str, next);
       } break;
       case 'H':
@@ -362,11 +429,11 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
         error = parse_second(result, date_str, next);
         break;
       case 'T': {
-        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_hour(result, date_str, next);
-        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_minute(result, date_str, next);
-        //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         error = parse_second(result, date_str, next);
       } break;
       case 'f':
