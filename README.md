@@ -48,12 +48,10 @@ int main() {
 | `%S`             | parses **second** as a decimal number, e.g. 59                     |
 | `%F`             | parses **year-month-day** as an iso8601 date, e.g. 2023-05-04      |
 | `%T`             | parses **hour:minute:second** as an iso8601 time, e.g. 16:31:59    |
-| `%f`             | parses **milliseconds** as a decimal number, e.g. 869              |
+| `%f`             | parses **(milli|micro|nano)seconds** as a decimal number, e.g. 869 |
 | `%z`             | parses **timezone** as a decimal number, e.g. +0100 or -01:00 or Z |
+| `%p`             | parses **AM/PM** e.g. AM or PM                                     |
 
-## Notes
-
-- Currently not supported all format specifiers (at least ISO-8601 capable now)
 
 ## [Performance](https://quick-bench.com/q/6O2Ctb9wRnkvx_kHeq40xbYJu6A)
 
