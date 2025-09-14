@@ -67,19 +67,19 @@ MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
   auto error = mgutility::from_chars(str.data() + next + begin_offset,
                                      str.data() + len + next, result);
 
-  next = ++len + next;
+  next += ++len;
 
   return error.ec;
 }
 
 /**
  * @brief Returns the absolute value of an integer.
- * 
- * @param value 
- * @return constexpr int32_t 
+ *
+ * @param value
+ * @return constexpr int32_t
  */
 constexpr int32_t abs(int32_t value) noexcept {
-    return value >= 0 ? value : -value;
+  return value >= 0 ? value : -value;
 }
 
 /**
@@ -333,7 +333,7 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result,
                                              uint32_t &next) -> std::errc {
   std::errc error{};
   // NOLINTNEXTLINE [bugprone-inc-dec-in-conditions]
-  if (--next < date_str.size() && date_str[next] == 'Z') {
+  if (next < date_str.size() && date_str[next] == 'Z') {
     error = handle_timezone(result, 0);
     return error;
   }
@@ -352,6 +352,8 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result,
     return error;
   }
 
+  --next;
+
   if (next < date_str.size() && date_str[next] == ':') {
     ++next;
   }
@@ -369,6 +371,36 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result,
 
   error = handle_timezone(result, sign == '+' ? -offset : offset);
   return error;
+}
+
+/**
+ * @brief Parses AM/PM and adjusts the hour in the tm structure accordingly.
+ *
+ * @param result The tm structure to adjust.
+ * @param date_str The date string containing AM/PM.
+ * @param next The position of the next character to parse.
+ * @return std::errc An error code indicating success or failure.
+ */
+MGUTILITY_CNSTXPR auto parse_am_pm(detail::tm &result, string_view date_str,
+                                   uint32_t &next) -> std::errc {
+  if (next + 2 > date_str.size()) {
+    return std::errc::invalid_argument;
+  }
+  if (date_str.substr(next, 2) == "AM") {
+    if (result.tm_hour == 12) {
+      result.tm_hour = 0; // 12 PM = 12, 12 AM = 0
+    }
+    next += 2;
+  } else if (date_str.substr(next, 2) == "PM") {
+    if (result.tm_hour != 12) {
+      result.tm_hour += 12; // 1-11 PM = 13-23
+    }
+    next += 2;
+  } else {
+    return std::errc::invalid_argument;
+  }
+  ++next;
+  return std::errc{};
 }
 
 /**
@@ -393,6 +425,7 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
   }
 
   uint32_t next = 0;
+  bool is_specifier = false;
   std::errc error{};
 
   for (std::size_t i = begin; i < end; ++i) {
@@ -401,6 +434,11 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
       if (i + 1 >= format.size()) {
         return std::errc::invalid_argument;
       }
+
+      if (is_specifier) {
+        --next;
+      }
+
       switch (format[i + 1]) {
       case 'Y':
         error = parse_year(result, date_str, next);
@@ -439,26 +477,34 @@ MGUTILITY_CNSTXPR auto get_time(detail::tm &result, string_view format,
       case 'f':
         error = parse_fraction(result, date_str, next);
         break;
-      case 'z': {
+      case 'z':
         error = parse_timezone_offset(result, date_str, next);
-      } break;
+        break;
+      case 'p':
+        error = parse_am_pm(result, date_str, next);
+        break;
       default:
         return std::errc::invalid_argument;
       }
       if (error != std::errc{}) {
         return error;
       }
-    } break;
+      ++i;
+      is_specifier = true;
+    }
+      continue;
     case ' ': // Space separator
     case '-': // Dash separator
     case '/': // Slash separator
     case '.': // Dot separator
     case ':': // Colon separator
+    case 'T': // 'T' separator
       if (i > 1 && format[i] != date_str[next - 1]) {
         return std::errc::invalid_argument;
       }
       break;
     }
+    is_specifier = false;
   }
 
   return std::errc{};
