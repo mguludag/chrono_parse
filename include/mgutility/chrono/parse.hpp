@@ -396,7 +396,7 @@ MGUTILITY_CNSTXPR auto parse_timezone_offset(detail::tm &result,
  */
 MGUTILITY_CNSTXPR auto parse_am_pm(detail::tm &result, string_view date_str,
                                    uint32_t &next) -> std::errc {
-  if (next + 2 > date_str.size()) {
+  if (next + 2 > date_str.size() || result.tm_hour < 1 || result.tm_hour > 12) {
     return std::errc::invalid_argument;
   }
   if (date_str.substr(next, 2) == "AM") {
