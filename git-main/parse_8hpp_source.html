@@ -164,7 +164,7 @@ $(function() { codefold.init(0); });
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>}</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="comment">// NOLINTNEXTLINE</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">constexpr</span> <span class="keyword">auto</span> pow(int32_t base, int32_t exp) <span class="keyword">noexcept</span> -&gt; int32_t {</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">constexpr</span> <span class="keyword">auto</span> pow(T base, T exp) <span class="keyword">noexcept</span> -&gt; T {</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>  <span class="comment">// NOLINTNEXTLINE</span></div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  <span class="keywordflow">return</span> exp &lt; 0 ? 0 : exp == 0 ? 1 : base * pow(base, exp - 1);</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>}</div>
@@ -373,7 +373,7 @@ $(function() { codefold.init(0); });
 <div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
 <div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>MGUTILITY_CNSTXPR <span class="keyword">auto</span> parse_fraction(detail::tm &amp;result, string_view date_str,</div>
 <div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>                                      uint32_t &amp;next) -&gt; std::errc {</div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>  int32_t digits = 0;</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>  uint32_t digits = 0;</div>
 <div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>  <span class="keywordflow">while</span> (next + digits &lt; date_str.size() &amp;&amp;</div>
 <div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>         mgutility::detail::is_digit(date_str[next + digits]) &amp;&amp; digits &lt; 9) {</div>
 <div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>    ++digits;</div>
@@ -382,7 +382,7 @@ $(function() { codefold.init(0); });
 <div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>  <span class="keywordflow">if</span> (error != std::errc{}) {</div>
 <div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>    <span class="keywordflow">return</span> error;</div>
 <div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>  }</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  result.tm_ms *= <span class="keyword">static_cast&lt;</span>uint32_t<span class="keyword">&gt;</span>(pow(10, 9 - digits));</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  result.tm_ms *= pow&lt;uint32_t&gt;(10, 9 - digits);</div>
 <div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>  error = check_range(result.tm_ms, 0U, 999999999U);</div>
 <div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>  <span class="keywordflow">return</span> error;</div>
 <div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>}</div>
