@@ -84,7 +84,7 @@ constexpr int32_t abs(int32_t value) noexcept {
 }
 
 // NOLINTNEXTLINE
-constexpr auto pow(int32_t base, int32_t exp) noexcept -> int32_t {
+template <typename T> constexpr auto pow(T base, T exp) noexcept -> T {
   // NOLINTNEXTLINE
   return exp < 0 ? 0 : exp == 0 ? 1 : base * pow(base, exp - 1);
 }
@@ -327,7 +327,7 @@ MGUTILITY_CNSTXPR auto parse_second(detail::tm &result, string_view date_str,
 
 MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
                                       uint32_t &next) -> std::errc {
-  int32_t digits = 0;
+  uint32_t digits = 0;
   while (next + digits < date_str.size() &&
          mgutility::detail::is_digit(date_str[next + digits]) && digits < 9) {
     ++digits;
@@ -336,7 +336,7 @@ MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
   if (error != std::errc{}) {
     return error;
   }
-  result.tm_ms *= static_cast<uint32_t>(pow(10, 9 - digits));
+  result.tm_ms *= pow<uint32_t>(10, 9 - digits);
   error = check_range(result.tm_ms, 0U, 999999999U);
   return error;
 }
