@@ -434,7 +434,7 @@ $(function() { codefold.init(0); });
 <div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span> </div>
 <div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>MGUTILITY_CNSTXPR <span class="keyword">auto</span> parse_am_pm(detail::tm &amp;result, string_view date_str,</div>
 <div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>                                   uint32_t &amp;next) -&gt; std::errc {</div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>  <span class="keywordflow">if</span> (next + 2 &gt; date_str.size()) {</div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>  <span class="keywordflow">if</span> (next + 2 &gt; date_str.size() || result.tm_hour &lt; 1 || result.tm_hour &gt; 12) {</div>
 <div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keywordflow">return</span> std::errc::invalid_argument;</div>
 <div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>  }</div>
 <div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>  <span class="keywordflow">if</span> (date_str.substr(next, 2) == <span class="stringliteral">&quot;AM&quot;</span>) {</div>
