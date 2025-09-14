@@ -34,6 +34,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <ratio>
 #include <stdexcept>
 #include <type_traits>
 
@@ -80,6 +81,12 @@ MGUTILITY_CNSTXPR auto parse_integer(T &result, mgutility::string_view str,
  */
 constexpr int32_t abs(int32_t value) noexcept {
   return value >= 0 ? value : -value;
+}
+
+// NOLINTNEXTLINE
+constexpr auto pow(int32_t base, int32_t exp) noexcept -> int32_t {
+  // NOLINTNEXTLINE
+  return exp < 0 ? 0 : exp == 0 ? 1 : base * pow(base, exp - 1);
 }
 
 /**
@@ -320,11 +327,17 @@ MGUTILITY_CNSTXPR auto parse_second(detail::tm &result, string_view date_str,
 
 MGUTILITY_CNSTXPR auto parse_fraction(detail::tm &result, string_view date_str,
                                       uint32_t &next) -> std::errc {
-  auto error = parse_integer(result.tm_ms, date_str, 3, next);
+  int32_t digits = 0;
+  while (next + digits < date_str.size() &&
+         mgutility::detail::is_digit(date_str[next + digits]) && digits < 9) {
+    ++digits;
+  }
+  auto error = parse_integer(result.tm_ms, date_str, digits, next);
   if (error != std::errc{}) {
     return error;
   }
-  error = check_range(result.tm_ms, 0U, 999U);
+  result.tm_ms *= static_cast<uint32_t>(pow(10, 9 - digits));
+  error = check_range(result.tm_ms, 0U, 999999999U);
   return error;
 }
 
@@ -535,8 +548,8 @@ auto parse(typename Clock::time_point &time_point, string_view format,
   if (error != std::errc{}) {
     return std::make_error_code(error);
   }
-  time_point = Clock::from_time_t(time_t);
-  time_point += std::chrono::milliseconds(time_struct.tm_ms);
+  time_point = std::chrono::time_point_cast<typename Clock::duration>(
+      Clock::from_time_t(time_t) + std::chrono::nanoseconds{time_struct.tm_ms});
   return std::error_code{};
 }
 
